@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — Assumptions | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/demo">Live Demo</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/capabilities">AI Capabilities</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<section class="section">
+    <div class="container">
+        <div class="text-center" style="max-width: 70ch; margin: 0 auto var(--sp-8);">
+            <div class="eyebrow">Full transparency</div>
+            <h1 style="font-size: clamp(2rem, 4vw, 2.75rem);">Dataset &amp; cost assumptions</h1>
+            <p class="text-lg text-muted">Every rule, range, and ₹ figure used by the demo — sourced from real foundry references and editable per plant. <a href="/api/assumptions">Raw JSON</a> · <a href="/api/dictionary">Data dictionary JSON</a></p>
+        </div>
+
+        <!-- ===== Part & material ===== -->
+        <div class="assumption-block">
+            <h3>Part &amp; material</h3>
+            <div class="grid-2 assumption-grid">
+                <div class="assumption-card">
+                    <div class="ac-label">Part ID</div>
+                    <div class="ac-value font-mono">{{ assumptions.part.id }}</div>
+                    <div class="ac-sub">{{ assumptions.part.name }} · {{ assumptions.part.type }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Material grade</div>
+                    <div class="ac-value">{{ assumptions.material.grade }}</div>
+                    <div class="ac-sub">{{ assumptions.material.standard }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Min tensile strength</div>
+                    <div class="ac-value font-mono">{{ assumptions.material.min_tensile_strength_mpa }} MPa</div>
+                    <div class="ac-sub">Typical hardness {{ assumptions.material.typical_hardness_bhn }} BHN · matrix: {{ assumptions.material.matrix }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Primary customer</div>
+                    <div class="ac-value">{{ assumptions.part.primary_customer }}</div>
+                    <div class="ac-sub">Secondary: {{ assumptions.part.secondary_customers | join(', ') }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Standards ===== -->
+        <div class="assumption-block">
+            <h3>References followed</h3>
+            <div class="standards-row">
+                {% for ref in assumptions.references %}
+                <div class="standard-badge"><span class="badge-mark">✓</span><div><strong>{{ ref.name }}</strong><div class="ac-sub">{{ ref.full }}</div></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== Chemistry ===== -->
+        <div class="assumption-block">
+            <h3>Chemistry ranges (IS 210 FG260)</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Element</th><th>Min %</th><th>Max %</th><th>Rationale</th></tr></thead>
+                <tbody>
+                    {% for el, r in assumptions.chemistry_ranges_pct.items() %}
+                    <tr>
+                        <td class="col-name">{{ el }}</td>
+                        <td class="font-mono">{{ "%.2f"|format(r.min) }}</td>
+                        <td class="font-mono">{{ "%.2f"|format(r.max) }}</td>
+                        <td>{{ r.rationale }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="assumption-rule">
+                <strong>Carbon Equivalent:</strong> <code>{{ assumptions.carbon_equivalent.formula }}</code> — eutectic band {{ assumptions.carbon_equivalent.eutectic_band[0] }}–{{ assumptions.carbon_equivalent.eutectic_band[1] }}.
+                Hypoeutectic → {{ assumptions.carbon_equivalent.hypoeutectic_penalty | lower }}. Hypereutectic → {{ assumptions.carbon_equivalent.hypereutectic_penalty | lower }}.
+            </div>
+            <div class="assumption-rule">
+                <strong>Mn/S rule:</strong> <code>{{ assumptions.mn_s_rule.formula }}</code> — {{ assumptions.mn_s_rule.violation_effect }}.
+            </div>
+        </div>
+
+        <!-- ===== Pour & cooling ===== -->
+        <div class="assumption-block">
+            <h3>Pour temperature &amp; cooling</h3>
+            <div class="grid-2 assumption-grid">
+                <div class="assumption-card">
+                    <div class="ac-label">Liquidus (FG260)</div>
+                    <div class="ac-value font-mono">{{ assumptions.pour_temperature.liquidus_C }} °C</div>
+                    <div class="ac-sub">per Heine/Loper/Rosenthal Ch. 5</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Optimal pour window</div>
+                    <div class="ac-value font-mono">{{ assumptions.pour_temperature.optimal_pour_C[0] }}–{{ assumptions.pour_temperature.optimal_pour_C[1] }} °C</div>
+                    <div class="ac-sub">Liquidus + 220–250 °C superheat</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Below {{ assumptions.pour_temperature.min_pour_C }} °C</div>
+                    <div class="ac-value">Cold-shut / misrun risk rises sigmoidally</div>
+                    <div class="ac-sub">{{ assumptions.pour_temperature.low_pour_effect }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Above {{ assumptions.pour_temperature.max_safe_pour_C }} °C</div>
+                    <div class="ac-value">Gas porosity / mold burn-on</div>
+                    <div class="ac-sub">{{ assumptions.pour_temperature.high_pour_effect }}</div>
+                </div>
+            </div>
+            <table class="assumption-table" style="margin-top: var(--sp-3);">
+                <thead><tr><th>Cooling rate band (°C/min)</th><th>Effect on microstructure</th></tr></thead>
+                <tbody>
+                    {% for k, v in assumptions.cooling_rate_C_per_min.items() %}
+                    <tr><td class="font-mono">{{ v.range[0] }}–{{ v.range[1] }} <span class="ac-sub">({{ k.replace('_',' ') }})</span></td><td>{{ v.effect }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== Porosity mechanism ===== -->
+        <div class="assumption-block">
+            <h3>Porosity mechanism (monsoon driver)</h3>
+            <div class="assumption-rule">
+                <strong>Formula:</strong> <code>{{ assumptions.porosity_mechanism.formula }}</code><br>
+                <strong>Mechanism:</strong> {{ assumptions.porosity_mechanism.mechanism }}.<br>
+                <strong>Target monsoon multiplier:</strong> {{ assumptions.porosity_mechanism.monsoon_multiplier_target }}× baseline.
+            </div>
+        </div>
+
+        <!-- ===== Pattern wear & furnace drift ===== -->
+        <div class="assumption-block">
+            <h3>Pattern wear &amp; furnace drift</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Pattern age (cycles)</th><th>Effect on dimensional NC rate</th></tr></thead>
+                <tbody>
+                    {% for k, v in assumptions.pattern_wear_curve.items() %}
+                    <tr><td class="font-mono">{{ k.replace('_',' ') }}</td><td>{{ v }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="assumption-rule" style="margin-top: var(--sp-3);">
+                <strong>Furnace drift:</strong>
+                new lining ±{{ assumptions.furnace_drift.new_lining_accuracy_C }}°C accuracy →
+                +{{ assumptions.furnace_drift.drift_at_500_heats_C[0] }}–{{ assumptions.furnace_drift.drift_at_500_heats_C[1] }}°C at 500 heats →
+                +{{ assumptions.furnace_drift.drift_at_700_plus_C[0] }}–{{ assumptions.furnace_drift.drift_at_700_plus_C[1] }}°C at 700+. <em>{{ assumptions.furnace_drift.F1_vs_F2 }}.</em>
+            </div>
+        </div>
+
+        <!-- ===== Dimensional tolerances ===== -->
+        <div class="assumption-block">
+            <h3>Dimensional tolerances</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Dimension</th><th>Target</th><th>USL</th><th>LSL</th><th>Target Cpk</th><th>Note</th></tr></thead>
+                <tbody>
+                    {% for k, v in assumptions.dimensional_tolerances.items() %}
+                    {% if v is mapping %}
+                    <tr>
+                        <td class="col-name">{{ k.replace('_',' ') }}</td>
+                        <td class="font-mono">{{ v.target }}</td>
+                        <td class="font-mono">{{ v.USL if v.USL is defined else '—' }}</td>
+                        <td class="font-mono">{{ v.LSL if v.LSL is defined else '—' }}</td>
+                        <td class="font-mono">{{ v.target_Cpk if v.target_Cpk is defined else (v.max if v.max is defined else '—') }}</td>
+                        <td>{{ v.note if v.note is defined else '' }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="assumption-rule" style="margin-top: var(--sp-3);">
+                <strong>OEM Cpk requirement:</strong> ≥ {{ assumptions.OEM_Cpk_requirement.value }} per {{ assumptions.OEM_Cpk_requirement.standard }}.
+            </div>
+        </div>
+
+        <!-- ===== Operators / shifts ===== -->
+        <div class="assumption-block">
+            <h3>Operators &amp; shifts</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Operator</th><th>Shift</th><th>Exp (yr)</th><th>Baseline defect %</th><th>Notes</th></tr></thead>
+                <tbody>
+                    {% for op, info in assumptions.operators.items() %}
+                    <tr>
+                        <td class="col-name">{{ op }}</td>
+                        <td>{{ info.shift }}</td>
+                        <td class="font-mono">{{ info.experience_years }}</td>
+                        <td class="font-mono">{{ info.baseline_defect_pct }}%</td>
+                        <td>{{ info.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="assumption-rule" style="margin-top: var(--sp-3);">
+                <strong>Monday-morning Shift A penalty:</strong> +{{ assumptions.monday_morning_shift_A_penalty_pct }}% defect rate (cold furnace start effect).
+            </div>
+        </div>
+
+        <!-- ===== Seasonal patterns ===== -->
+        <div class="assumption-block">
+            <h3>Indian climate &amp; seasonal patterns</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Season</th><th>Months</th><th>Humidity %</th><th>Ambient °C</th></tr></thead>
+                <tbody>
+                    {% for season, info in assumptions.seasons_india.items() %}
+                    <tr>
+                        <td class="col-name">{{ season.replace('_',' ') }}</td>
+                        <td class="font-mono">{{ info.months | join(', ') }}</td>
+                        <td class="font-mono">{{ info.humidity_pct[0] }}–{{ info.humidity_pct[1] }}</td>
+                        <td class="font-mono">{{ info.ambient_C[0] }}–{{ info.ambient_C[1] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== Defect drivers ===== -->
+        <div class="assumption-block">
+            <h3>Defect drivers &amp; mechanisms</h3>
+            <div class="grid-3" style="grid-template-columns: repeat(3, 1fr);">
+                {% for cls, info in assumptions.defect_drivers.items() %}
+                <div class="defect-mechanism-card">
+                    <div class="defect-name">{{ cls.replace('_',' ') }}</div>
+                    <div class="drivers"><strong>Drivers:</strong> {{ info.drivers | join(' · ') }}</div>
+                    <div class="mechanism"><em>{{ info.mechanism }}</em></div>
+                    <div class="ac-sub" style="margin-top: var(--sp-2);">Typical severity: <strong>{{ info.typical_severity.replace('_',' ') }}</strong></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== Severity distribution ===== -->
+        <div class="assumption-block">
+            <h3>Severity distribution per defect class</h3>
+            <table class="assumption-table">
+                <thead><tr><th>Defect class</th><th>Minor rework</th><th>Major rework</th><th>Scrap</th></tr></thead>
+                <tbody>
+                    {% for cls, dist in assumptions.severity_distribution.items() %}
+                    <tr>
+                        <td class="col-name">{{ cls.replace('_',' ') }}</td>
+                        <td class="font-mono">{{ (dist.Minor_Rework * 100) | int }}%</td>
+                        <td class="font-mono">{{ (dist.Major_Rework * 100) | int }}%</td>
+                        <td class="font-mono">{{ (dist.Scrap * 100) | int }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== Cost assumptions ===== -->
+        <div class="assumption-block">
+            <h3>Cost assumptions (₹ INR)</h3>
+            <div class="grid-2 assumption-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="assumption-card">
+                    <div class="ac-label">Scrap cost / casting</div>
+                    <div class="ac-value font-mono">₹{{ "{:,}".format(costs.scrap_cost_per_casting) }}</div>
+                    <div class="ac-sub">Material value + melting energy + mold cost + labor</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Rework cost / casting</div>
+                    <div class="ac-value font-mono">₹{{ "{:,}".format(costs.rework_cost_per_casting) }}</div>
+                    <div class="ac-sub">Inspection + machining + requalification</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Delay cost / minute</div>
+                    <div class="ac-value font-mono">₹{{ "{:,}".format(costs.delay_cost_per_minute) }}</div>
+                    <div class="ac-sub">Line stoppage at downstream machining / assembly</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Complaint cost</div>
+                    <div class="ac-value font-mono">₹{{ "{:,}".format(costs.customer_complaint_cost) }}</div>
+                    <div class="ac-sub">Logistics + investigation + concession per incident</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Warranty claim cost</div>
+                    <div class="ac-value font-mono">₹{{ "{:,}".format(costs.warranty_claim_cost) }}</div>
+                    <div class="ac-sub">Part replacement + field service + brand exposure</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Annual volume target</div>
+                    <div class="ac-value font-mono">{{ "{:,}".format(costs.annual_volume_target_castings) }} castings</div>
+                    <div class="ac-sub">{{ costs.warranty_escalation_rate * 100 }}% complaints escalate to warranty</div>
+                </div>
+            </div>
+            <table class="assumption-table" style="margin-top: var(--sp-4);">
+                <thead><tr><th></th><th>Current state (FY25)</th><th>Target state (with AI)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Scrap rate</strong></td><td class="font-mono">{{ costs.current_state.scrap_rate_pct }}%</td><td class="font-mono">{{ costs.target_state.scrap_rate_pct }}%</td></tr>
+                    <tr><td><strong>Rework rate</strong></td><td class="font-mono">{{ costs.current_state.rework_rate_pct }}%</td><td class="font-mono">{{ costs.target_state.rework_rate_pct }}%</td></tr>
+                    <tr><td><strong>OEM complaints / yr</strong></td><td class="font-mono">{{ costs.current_state.complaint_count_annual }}</td><td class="font-mono">&lt; {{ costs.target_state.complaint_count_annual }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== Dataset / verification ===== -->
+        <div class="assumption-block">
+            <h3>Dataset metadata</h3>
+            <div class="grid-2 assumption-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="assumption-card">
+                    <div class="ac-label">Rows</div>
+                    <div class="ac-value font-mono">{{ "{:,}".format(assumptions.dataset.rows) }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Time window</div>
+                    <div class="ac-value font-mono">{{ assumptions.dataset.time_window_days }} days</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Heats / day</div>
+                    <div class="ac-value font-mono">~{{ assumptions.dataset.heats_per_day_avg }}</div>
+                </div>
+                <div class="assumption-card">
+                    <div class="ac-label">Shifts · furnaces · patterns</div>
+                    <div class="ac-value font-mono">{{ assumptions.dataset.shifts|length }} / {{ assumptions.dataset.furnaces|length }} / {{ assumptions.dataset.patterns|length }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Verification report ===== -->
+        <div class="assumption-block">
+            <h3>Metallurgical verification report</h3>
+            <p class="text-muted">Output of <code>python generate_data.py --verify</code> — the audit you can show your metallurgist.</p>
+            <pre class="verification-report">{{ verification }}</pre>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

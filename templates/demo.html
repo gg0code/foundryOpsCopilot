@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — Live Demo | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/demo" class="active">Live Demo</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/capabilities">AI Capabilities</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div style="padding-top: var(--sp-6); display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;">
+        <div>
+            <div class="eyebrow">Live demonstration</div>
+            <h2 style="margin-bottom: var(--sp-1);">Engine Cylinder Block · KE-CYL-V4-220</h2>
+            <p class="text-muted">FG260 grey iron, IS 210 spec · primary customer OEM-TATA · slide the parameters to see predictions change.</p>
+        </div>
+        <div id="latency-pill" class="latency-pill"><span>●</span> <span id="latency-value">— ms</span></div>
+    </div>
+
+    <div class="demo-layout">
+        <!-- ===== Sliders panel ===== -->
+        <aside class="sliders-panel">
+            <div class="preset-buttons preset-buttons-two">
+                <button data-preset="typical">Typical heat</button>
+                <button data-preset="ai_recommended" class="ai">AI Recommended setpoint</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-xs); color: var(--color-text-soft); margin-bottom: var(--sp-3);">
+                <span>Heat parameters</span>
+                <a href="#" id="reset-link" style="font-size: var(--fs-xs);">reset</a>
+            </div>
+
+            <!-- Operations -->
+            <details class="slider-group" open>
+                <summary><h4>Operations</h4><span class="group-toggle">▾</span></summary>
+                <div class="select-row"><label>Shift</label><select id="shift"><option>A</option><option selected>B</option><option>C</option></select></div>
+                <div class="select-row"><label>Furnace</label><select id="furnace_id"><option selected>F1</option><option>F2</option></select></div>
+                <div class="select-row"><label>Mold Line</label><select id="mold_line_id"><option selected>ML-1</option><option>ML-2</option></select></div>
+                <div class="select-row"><label>Pattern</label><select id="pattern_id"><option>PT-A</option><option>PT-B</option><option selected>PT-C</option></select></div>
+                <div class="select-row"><label>Season</label><select id="season"><option>Winter</option><option>Pre_monsoon</option><option selected>Monsoon</option><option>Post_monsoon</option></select></div>
+
+                <div class="slider-row"><label>Pattern age (cycles)</label><span class="value" id="v-pattern_age_cycles">1100</span>
+                    <input type="range" id="pattern_age_cycles" min="0" max="1500" value="1100">
+                </div>
+                <div class="slider-row"><label>Furnace temp drift (°C)</label><span class="value" id="v-furnace_temp_drift_C">12.5</span>
+                    <input type="range" id="furnace_temp_drift_C" min="0" max="20" step="0.5" value="12.5">
+                </div>
+            </details>
+
+            <!-- Environment -->
+            <details class="slider-group" open>
+                <summary><h4>Environment</h4><span class="group-toggle">▾</span></summary>
+                <div class="slider-row"><label>Ambient humidity (%)</label><span class="value" id="v-ambient_humidity_pct">88</span>
+                    <input type="range" id="ambient_humidity_pct" min="35" max="95" step="1" value="88">
+                </div>
+                <div class="slider-row"><label>Ambient temp (°C)</label><span class="value" id="v-ambient_temp_C">30</span>
+                    <input type="range" id="ambient_temp_C" min="15" max="40" step="0.5" value="30">
+                </div>
+                <div class="slider-row"><label>Sand moisture (%)</label><span class="value" id="v-sand_moisture_pct">5.2</span>
+                    <input type="range" id="sand_moisture_pct" min="2.5" max="6" step="0.1" value="5.2">
+                </div>
+                <div class="slider-row"><label>Core moisture (%)</label><span class="value" id="v-core_moisture_pct">3.8</span>
+                    <input type="range" id="core_moisture_pct" min="2" max="5" step="0.1" value="3.8">
+                </div>
+            </details>
+
+            <!-- Mold -->
+            <details class="slider-group" open>
+                <summary><h4>Mold</h4><span class="group-toggle">▾</span></summary>
+                <div class="slider-row"><label>Mold hardness (B)</label><span class="value" id="v-mold_hardness_B">79</span>
+                    <input type="range" id="mold_hardness_B" min="72" max="92" step="0.5" value="79">
+                </div>
+                <div class="slider-row"><label>Mold temp (°C)</label><span class="value" id="v-mold_temp_C">44</span>
+                    <input type="range" id="mold_temp_C" min="22" max="55" step="0.5" value="44">
+                </div>
+                <div class="slider-row"><label>Binder (%)</label><span class="value" id="v-binder_pct">2.0</span>
+                    <input type="range" id="binder_pct" min="1.4" max="2.4" step="0.05" value="2.0">
+                </div>
+                <div class="slider-row"><label>Permeability (GFN)</label><span class="value" id="v-mold_permeability">92</span>
+                    <input type="range" id="mold_permeability" min="80" max="160" step="1" value="92">
+                </div>
+            </details>
+
+            <!-- Process -->
+            <details class="slider-group" open>
+                <summary><h4>Process</h4><span class="group-toggle">▾</span></summary>
+                <div class="slider-row"><label>Pour temp (°C)</label><span class="value" id="v-pour_temp_C">1395</span>
+                    <input type="range" id="pour_temp_C" min="1340" max="1480" step="1" value="1395">
+                </div>
+                <div class="slider-row"><label>Pour rate (kg/s)</label><span class="value" id="v-pour_rate_kg_per_s">6.8</span>
+                    <input type="range" id="pour_rate_kg_per_s" min="4.5" max="10.5" step="0.1" value="6.8">
+                </div>
+                <div class="slider-row"><label>Pour delay (min)</label><span class="value" id="v-pour_delay_min">6.5</span>
+                    <input type="range" id="pour_delay_min" min="0" max="15" step="0.1" value="6.5">
+                </div>
+                <div class="slider-row"><label>Cooling rate (°C/min)</label><span class="value" id="v-cooling_rate_C_per_min">14.0</span>
+                    <input type="range" id="cooling_rate_C_per_min" min="4" max="22" step="0.1" value="14">
+                </div>
+                <div class="slider-row"><label>Fade time (min)</label><span class="value" id="v-fade_time_min">8</span>
+                    <input type="range" id="fade_time_min" min="0" max="30" step="0.5" value="8">
+                </div>
+                <div class="slider-row"><label>Inoculant dose (%)</label><span class="value" id="v-inoculant_dose_pct">0.18</span>
+                    <input type="range" id="inoculant_dose_pct" min="0.10" max="0.30" step="0.01" value="0.18">
+                </div>
+            </details>
+
+            <!-- Chemistry -->
+            <details class="slider-group">
+                <summary><h4>Chemistry (FG260 IS 210)</h4><span class="group-toggle">▾</span></summary>
+                <div class="slider-row"><label>C (%)</label><span class="value" id="v-C_pct">3.30</span>
+                    <input type="range" id="C_pct" min="3.10" max="3.60" step="0.01" value="3.30">
+                </div>
+                <div class="slider-row"><label>Si (%)</label><span class="value" id="v-Si_pct">2.10</span>
+                    <input type="range" id="Si_pct" min="1.80" max="2.40" step="0.01" value="2.10">
+                </div>
+                <div class="slider-row"><label>Mn (%)</label><span class="value" id="v-Mn_pct">0.62</span>
+                    <input type="range" id="Mn_pct" min="0.50" max="0.90" step="0.01" value="0.62">
+                </div>
+                <div class="slider-row"><label>S (%)</label><span class="value" id="v-S_pct">0.10</span>
+                    <input type="range" id="S_pct" min="0.06" max="0.12" step="0.005" value="0.10">
+                </div>
+                <div class="slider-row"><label>P (%)</label><span class="value" id="v-P_pct">0.085</span>
+                    <input type="range" id="P_pct" min="0.05" max="0.12" step="0.005" value="0.085">
+                </div>
+                <div class="slider-row"><label>Cr (%)</label><span class="value" id="v-Cr_pct">0.03</span>
+                    <input type="range" id="Cr_pct" min="0" max="0.20" step="0.01" value="0.03">
+                </div>
+                <div style="font-size: var(--fs-xs); color: var(--color-text-soft); margin-top: var(--sp-2);" id="ce-readout">CE: <span class="font-mono">4.06</span></div>
+            </details>
+
+            <!-- Dimensional -->
+            <details class="slider-group">
+                <summary><h4>Dimensional (measured)</h4><span class="group-toggle">▾</span></summary>
+                <!-- Reference drawing for KE-CYL-V4-220 -->
+                <div class="part-drawing">
+                    <div class="part-drawing-title">Reference: Engine Cylinder Block KE-CYL-V4-220</div>
+                    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" class="part-svg" aria-label="Schematic of V4 engine block showing bore, deck height, and wall thickness measurements">
+                        <!-- Block outline -->
+                        <rect x="40" y="40" width="240" height="130" rx="6" fill="#F7F9FC" stroke="#0E4DA6" stroke-width="2"/>
+                        <!-- Deck (top face) -->
+                        <line x1="40" y1="40" x2="280" y2="40" stroke="#00B5A0" stroke-width="3"/>
+                        <text x="160" y="30" text-anchor="middle" fill="#00B5A0" font-size="10" font-weight="600">DECK FACE (220.00 mm)</text>
+                        <!-- Bores (4 cylinders for V4) -->
+                        <circle cx="90" cy="105" r="22" fill="#fff" stroke="#DC2626" stroke-width="2"/>
+                        <circle cx="142" cy="105" r="22" fill="#fff" stroke="#DC2626" stroke-width="2"/>
+                        <circle cx="194" cy="105" r="22" fill="#fff" stroke="#DC2626" stroke-width="2"/>
+                        <circle cx="246" cy="105" r="22" fill="#fff" stroke="#DC2626" stroke-width="2"/>
+                        <!-- Bore diameter callout -->
+                        <line x1="68" y1="105" x2="112" y2="105" stroke="#DC2626" stroke-width="1" stroke-dasharray="3 2"/>
+                        <text x="90" y="145" text-anchor="middle" fill="#DC2626" font-size="9" font-weight="600">⌀ 89.500 mm</text>
+                        <text x="90" y="156" text-anchor="middle" fill="#DC2626" font-size="8">(Cpk 1.21 — FAIL)</text>
+                        <!-- Wall thickness arrow -->
+                        <line x1="20" y1="80" x2="38" y2="80" stroke="#6366F1" stroke-width="1.5"/>
+                        <line x1="20" y1="80" x2="20" y2="130" stroke="#6366F1" stroke-width="1.5"/>
+                        <line x1="20" y1="130" x2="38" y2="130" stroke="#6366F1" stroke-width="1.5"/>
+                        <text x="14" y="108" text-anchor="end" fill="#6366F1" font-size="9" font-weight="600">wall</text>
+                        <text x="14" y="120" text-anchor="end" fill="#6366F1" font-size="8">4.50 mm</text>
+                        <!-- Deck height arrow -->
+                        <line x1="295" y1="40" x2="305" y2="40" stroke="#00B5A0" stroke-width="1.5"/>
+                        <line x1="300" y1="40" x2="300" y2="170" stroke="#00B5A0" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+                        <line x1="295" y1="170" x2="305" y2="170" stroke="#00B5A0" stroke-width="1.5"/>
+                        <text x="310" y="108" fill="#00B5A0" font-size="9" font-weight="600">deck H</text>
+                        <text x="310" y="120" fill="#00B5A0" font-size="8">220 mm</text>
+                        <!-- Title -->
+                        <text x="160" y="195" text-anchor="middle" fill="#0F1A2E" font-size="9" font-style="italic">V4 cast block · 4 bores · cross-section view</text>
+                    </svg>
+                    <div class="part-drawing-legend">
+                        <span class="legend-item"><span class="legend-swatch" style="background:#DC2626"></span>Bore Ø</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background:#00B5A0"></span>Deck height</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background:#6366F1"></span>Wall thickness</span>
+                    </div>
+                    <p class="part-drawing-note">These are the three OEM-critical dimensions measured on every casting at the CMM station. Bore is currently failing the OEM-TATA Cpk 1.33 requirement — that's the dimension AI helps recover.</p>
+                </div>
+                <div class="slider-row"><label>Bore diameter (mm)</label><span class="value" id="v-bore_diameter_mm">89.493</span>
+                    <input type="range" id="bore_diameter_mm" min="89.42" max="89.58" step="0.001" value="89.493">
+                </div>
+                <div class="slider-row"><label>Deck height (mm)</label><span class="value" id="v-deck_height_mm">220.00</span>
+                    <input type="range" id="deck_height_mm" min="219.85" max="220.15" step="0.005" value="220.00">
+                </div>
+                <div class="slider-row"><label>Wall thickness (mm)</label><span class="value" id="v-wall_thickness_mm">4.50</span>
+                    <input type="range" id="wall_thickness_mm" min="4.20" max="4.80" step="0.01" value="4.50">
+                </div>
+            </details>
+        </aside>
+
+        <!-- ===== Results ===== -->
+        <main class="results-panel">
+
+            <!-- Risk gauge -->
+            <div class="gauge-card" id="gauge-card">
+                <h4 style="margin-bottom: var(--sp-2);">Predicted Defect Risk</h4>
+                <p class="text-sm text-soft" style="margin-bottom: var(--sp-3);">Probability this heat results in any defect class</p>
+                <div class="gauge-svg-wrap">
+                    <svg width="220" height="220" viewBox="0 0 220 220">
+                        <circle cx="110" cy="110" r="92" stroke="#E1E6EE" stroke-width="22" fill="none"/>
+                        <circle id="gauge-arc" cx="110" cy="110" r="92" stroke="#16A34A"
+                                stroke-width="22" fill="none"
+                                stroke-dasharray="577.9" stroke-dashoffset="577.9"
+                                style="transition: stroke-dashoffset 360ms cubic-bezier(.4,.0,.2,1), stroke 360ms;"
+                                transform="rotate(-90 110 110)" stroke-linecap="round"/>
+                    </svg>
+                    <div class="pct">
+                        <div class="value" id="gauge-value">0%</div>
+                        <div class="label" id="gauge-label">Low risk</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predicted defect class & disposition -->
+            <div class="predicted-defect-card">
+                <h4>Most likely defect</h4>
+                <div class="defect-class" id="defect-class-name">—</div>
+                <div class="top-class-prob" id="defect-class-prob">prediction loading…</div>
+                <div style="margin-top: var(--sp-4); border-top: 1px solid var(--color-border-soft); padding-top: var(--sp-3);">
+                    <div class="text-sm text-soft">Predicted disposition</div>
+                    <span class="disposition-pill" id="disposition-pill" data-disp="OK">OK</span>
+                </div>
+                <div style="margin-top: var(--sp-3); font-size: var(--fs-xs); color: var(--color-text-soft);">
+                    Yield: <strong class="font-mono" id="yield-val">—%</strong> &nbsp;·&nbsp;
+                    Severity: <strong id="severity-val">—</strong>
+                </div>
+            </div>
+
+            <!-- Business impact stack -->
+            <div class="impact-stack">
+                <h4>Business impact (expected per casting)
+                    <span class="info-tip" tabindex="0" aria-label="How is each cost calculated?">
+                        <span class="info-icon">?</span>
+                        <span class="info-tip-body">
+                            <strong>How each number is computed</strong>
+                            <ul>
+                                <li><strong>Scrap cost:</strong> <code>(P(Scrap) + 0.4 × P(Major_Rework)) × ₹6,500</code><br>
+                                    <em>i.e. probability this casting ends up scrapped × scrap-cost-per-casting. The 0.4× factor accounts for ~40% of Major Rework cases that get scrapped instead of reworked when the cost-benefit doesn't justify it.</em></li>
+                                <li><strong>Rework cost:</strong> <code>(P(Minor_Rework) + 0.6 × P(Major_Rework)) × ₹1,800</code><br>
+                                    <em>Minor + the remaining 60% of Major Rework that goes through the rework loop. Cost includes inspection, machining time, requalification.</em></li>
+                                <li><strong>Delay cost:</strong> <code>expected_delay_min × ₹450/min</code><br>
+                                    <em>Expected delay = 8 min × P(Minor) + 18 min × P(Major) + 35 min × P(Scrap). Captures downstream line stoppage at machining/assembly.</em></li>
+                                <li><strong>OEM complaint:</strong> <code>P(complaint_escape) × ₹85,000</code><br>
+                                    <em>P(complaint_escape) ≈ 5% × P(any defect) + 5% × (warranty_risk/10). Cost includes logistics, investigation, customer concession per incident.</em></li>
+                                <li><strong>Warranty reserve:</strong> <code>(warranty_risk / 10) × 0.04 × ₹4,50,000</code><br>
+                                    <em>4% of complaints escalate to warranty claims. Each claim costs ₹4.5 L (part replacement, field service, brand exposure).</em></li>
+                                <li><strong>Total expected loss:</strong> sum of all five rows above.</li>
+                            </ul>
+                            <em>All assumptions live in <code>data/cost_assumptions.json</code> — editable per plant. See full breakdown at <a href="/assumptions">/assumptions</a>.</em>
+                        </span>
+                    </span>
+                </h4>
+                <div class="impact-row"><span class="swatch" style="background: #DC2626;"></span><span>Scrap cost</span><span class="value" id="cost-scrap">₹0</span></div>
+                <div class="impact-row"><span class="swatch" style="background: #F59E0B;"></span><span>Rework cost</span><span class="value" id="cost-rework">₹0</span></div>
+                <div class="impact-row"><span class="swatch" style="background: #6366F1;"></span><span>Delay cost</span><span class="value" id="cost-delay">₹0</span></div>
+                <div class="impact-row"><span class="swatch" style="background: #EC4899;"></span><span>OEM complaint</span><span class="value" id="cost-complaint">₹0</span></div>
+                <div class="impact-row"><span class="swatch" style="background: #6B7280;"></span><span>Warranty reserve</span><span class="value" id="cost-warranty">₹0</span></div>
+                <div class="impact-row"><span class="swatch" style="background: var(--color-primary);"></span><span>Total expected loss</span><span class="value" id="cost-total">₹0</span></div>
+            </div>
+
+            <!-- Root cause SHAP -->
+            <div class="root-cause-card">
+                <h4>Root cause (SHAP attribution)</h4>
+                <div class="sub">For predicted defect: <span id="root-cause-target">—</span></div>
+                <div id="shap-rows">
+                    <div class="text-sm text-soft" style="padding: var(--sp-3) 0;">Adjust a slider to see attributions.</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-card">
+                <h4>Recommended corrective actions</h4>
+                <div id="actions-list">
+                    <div class="action-item text-sm text-soft">Predictions will surface targeted actions here.</div>
+                </div>
+            </div>
+
+            <!-- Warranty meter (full width) -->
+            <div class="warranty-meter full">
+                <h4>Warranty risk
+                    <span class="info-tip" tabindex="0" aria-label="What does warranty risk mean?">
+                        <span class="info-icon">?</span>
+                        <span class="info-tip-body">
+                            <strong>What this score predicts</strong><br>
+                            The probability that this specific casting, once shipped, will trigger a warranty
+                            claim in the field within 24 months — i.e., a customer-side failure that costs
+                            ₹4.5 L per claim in part replacement, field service, and brand exposure.
+                            <br><br>
+                            <strong>What drives the score</strong>
+                            <ul>
+                                <li><strong>Chemistry:</strong> Cr &gt; 0.10% and P &gt; 0.06% promote brittleness &amp; hot cracking that show up months later. Mn/S violations leave free FeS at grain boundaries.</li>
+                                <li><strong>Dimensional capability:</strong> bore diameter drift from the 89.500 mm target — even within spec — accelerates ring-pack wear and head-gasket failures.</li>
+                                <li><strong>Cooling rate &amp; superheat:</strong> off-optimum thermal history → residual stresses → field cold-cracks.</li>
+                                <li><strong>Predicted severity:</strong> heats classified as Major_Rework or Scrap carry baseline warranty risk even if reworked.</li>
+                            </ul>
+                            <strong>How to read the scale</strong><br>
+                            <span class="font-mono">0–2</span> safe · <span class="font-mono">3–5</span> monitor (inspect twice) · <span class="font-mono">6–8</span> high — hold for QC review · <span class="font-mono">9–10</span> field failure likely — scrap rather than ship.
+                            <br><br>
+                            <em>Model:</em> LightGBM regressor trained on 5,000 heats with R² 0.73 against synthetic warranty outcomes.
+                        </span>
+                    </span>
+                </h4>
+                <p class="text-sm text-soft" style="margin-bottom: var(--sp-3);">0–10 scale · probability this casting becomes a field warranty claim</p>
+                <div class="warranty-bar">
+                    <div class="warranty-needle" id="warranty-needle" style="left: 5%;"></div>
+                </div>
+                <div class="warranty-scale">
+                    <span>0 · safe</span><span>5 · monitor</span><span>10 · field-failure likely</span>
+                </div>
+                <div class="warranty-value" id="warranty-value">— / 10</div>
+            </div>
+
+            <!-- Annual impact strip -->
+            <div class="annual-impact-strip full">
+                <h4>If your plant ran 14,000 castings at these conditions →</h4>
+                <div class="metric">
+                    <div class="lbl">This setpoint extrapolated</div>
+                    <div class="val" id="annual-this">—</div>
+                    <div class="metric-sub">per-casting × 14,000 / yr</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">AI-optimal extrapolated</div>
+                    <div class="val" id="annual-optimal">≈ ₹2.5 Cr</div>
+                    <div class="metric-sub">~₹1,800 × 14,000 / yr</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">Gap closed by AI</div>
+                    <div class="val" id="annual-gap">—</div>
+                    <div class="metric-sub" id="annual-gap-sub">improvement if all heats matched AI-optimal</div>
+                </div>
+                <div class="annual-strip-note">
+                    <strong>Note:</strong> these numbers are <em>worst-case extrapolations</em> — they assume every heat for the year looked like this one. Your real annual loss is a mix of good and bad heats. The point is the <em>per-casting delta</em>: every heat you steer toward AI-optimal recovers ~₹(this − 1,800) of expected loss.
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/demo.js') }}"></script>
+</body>
+</html>

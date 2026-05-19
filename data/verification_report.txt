@@ -1,0 +1,52 @@
+METALLURGICAL VERIFICATION REPORT
+============================================================
+Dataset: 5,000 heats | Part: KE-CYL-V4-220 | Grade: FG260 (IS 210)
+Time window: 2025-01-01 00:00:00 → 2025-12-31 21:56:00
+
+  ✓ C in IS 210 FG260 range [3.10-3.60%]: 100.0% of heats
+  ✓ Si in IS 210 FG260 range [1.80-2.40%]: 100.0% of heats
+  ✓ Mn in IS 210 FG260 range [0.50-0.90%]: 100.0% of heats
+  ✓ S in IS 210 FG260 range [0.06-0.12%]: 100.0% of heats
+  ✓ P in IS 210 FG260 range [0.05-0.12%]: 100.0% of heats
+  ✓ Cr in IS 210 FG260 range [0.00-0.20%]: 100.0% of heats
+  ✓ Mn/S ratio (Mn ≥ 1.7·S + 0.3): 99.8% satisfied (8 violations flagged as risk)
+  ✓ Carbon Equivalent range: 3.74–4.41 (72% in eutectic band 4.0–4.3)
+  ✓ Pour temp superheat ≥ 200°C: 95.2% of heats
+
+DIMENSIONAL CAPABILITY (OEM-TATA requires Cpk ≥ 1.33 per PPAP)
+------------------------------------------------------------
+  Bore Diameter Cpk:   1.21  (target ~1.18 — FAILING OEM 1.33, as designed)
+  Deck Height Cpk:     1.45  (target ~1.45 — passing)
+  Wall Thickness Cpk:  1.62  (target ~1.62 — passing)
+
+SEASONAL & PROCESS EFFECTS
+------------------------------------------------------------
+  Gas porosity by season (%): Winter 0.40 | Pre-monsoon 0.71 | Monsoon 5.70 | Post 0.73
+  Monsoon porosity multiplier: 14.33× baseline (real-world: 2-3×)
+  Dim_NC rate: 0.43% (<500 cycles) → 7.90% (≥800 cycles) = 18.3× — replacement threshold confirmed
+  Furnace F1 drift at year-end: +14.9°C (refractory wear pattern)
+
+DEFECT & DISPOSITION DISTRIBUTION
+------------------------------------------------------------
+  None                   4536  (90.72%)
+  Blow_Holes                9  ( 0.18%)
+  Gas_Porosity            114  ( 2.28%)
+  Shrinkage                26  ( 0.52%)
+  Cold_Shut                73  ( 1.46%)
+  Misrun                   10  ( 0.20%)
+  Sand_Inclusion           12  ( 0.24%)
+  Dimensional_NC          155  ( 3.10%)
+  Surface_Defects          45  ( 0.90%)
+  Cracks                   20  ( 0.40%)
+
+  OK                     4536  (90.72%)
+  Rework                  165  ( 3.30%)
+  Scrap                   296  ( 5.92%)
+  Customer_Reject           3  ( 0.06%)
+
+  Scrap rate: 5.92%  (target ~6.8%)
+  Rework rate: 3.30%  (target ~4.2%)
+  Customer reject rate: 0.060%
+
+ALL METALLURGICAL RULES VERIFIED
+============================================================

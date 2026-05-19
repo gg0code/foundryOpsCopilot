@@ -1,0 +1,12 @@
+# Minimum versions — pip picks the newest with prebuilt wheels for your Python.
+# (Pinning exact versions broke on Python 3.13/3.14 because old pandas/numpy
+# wheels weren't published for those interpreters.)
+flask>=3.0
+flask-cors>=4.0
+pandas>=2.1
+numpy>=1.26
+scikit-learn>=1.3
+xgboost>=2.0
+lightgbm>=4.1
+shap>=0.44
+joblib>=1.3

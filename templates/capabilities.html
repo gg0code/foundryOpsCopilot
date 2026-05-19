@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — AI Capabilities | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/demo">Live Demo</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/capabilities" class="active">AI Capabilities</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== Header ===== -->
+<section class="section section-tight">
+    <div class="container">
+        <div class="text-center" style="max-width: 70ch; margin: 0 auto;">
+            <div class="eyebrow">What's possible with AI</div>
+            <h1 style="font-size: clamp(2rem, 4vw, 3rem); margin-bottom: var(--sp-4);">Four Layers of AI in FoundryOps Copilot</h1>
+            <p class="text-lg text-muted">The defect predictor is one capability. The intelligence around it is the system. Here's how four distinct AI layers combine into a foundry operations co-pilot you can actually trust.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== 4-Quadrant Hero ===== -->
+<section class="section-tight" style="padding-top: 0;">
+    <div class="container">
+        <div class="layer-quadrant">
+            <a href="#layer-01" class="layer-tile tile-01">
+                <div class="layer-num">01</div>
+                <div class="layer-icon">💬</div>
+                <h3>AI that converses</h3>
+                <p class="tile-tag"><em>"Talks back."</em></p>
+                <p class="tile-body">Plain-English Q&amp;A over your heat data. No SQL, no dashboards — just ask.</p>
+                <span class="status-pill status-live">● LIVE in this demo</span>
+            </a>
+            <a href="#layer-02" class="layer-tile tile-02">
+                <div class="layer-num">02</div>
+                <div class="layer-icon">👁</div>
+                <h3>AI that watches</h3>
+                <p class="tile-tag"><em>"Always on."</em></p>
+                <p class="tile-body">Continuous anomaly detection flags drifting heats before they become defects.</p>
+                <span class="status-pill status-live">● LIVE in this demo</span>
+            </a>
+            <a href="#layer-03" class="layer-tile tile-03">
+                <div class="layer-num">03</div>
+                <div class="layer-icon">🎯</div>
+                <h3>AI that acts</h3>
+                <p class="tile-tag"><em>"Decides for you."</em></p>
+                <p class="tile-body">Bayesian optimization finds the precise setpoint combination, no trial heats.</p>
+                <span class="status-pill status-live">● LIVE in this demo</span>
+            </a>
+            <a href="#layer-04" class="layer-tile tile-04">
+                <div class="layer-num">04</div>
+                <div class="layer-icon">⚖</div>
+                <h3>AI that knows its limits</h3>
+                <p class="tile-tag"><em>"Honest about uncertainty."</em></p>
+                <p class="tile-body">Every prediction ships with a confidence band. Wide bands = bring in a human.</p>
+                <span class="status-pill status-live">● LIVE in this demo</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LAYER 01 ===== -->
+<section class="section" id="layer-01">
+    <div class="container">
+        <div class="layer-header">
+            <div class="layer-num-display">01</div>
+            <div>
+                <h2 style="margin-bottom: var(--sp-1);">AI That Converses</h2>
+                <p class="layer-tagline"><em>"Talks back."</em></p>
+            </div>
+        </div>
+
+        <div class="layer-grid">
+            <div class="layer-col">
+                <h4>What it does</h4>
+                <p>Every operator, plant head, and quality engineer in your foundry has questions about their data. Today, those questions take hours — open SAP, export to Excel, build a pivot table, talk to the analyst, wait. FoundryOps Copilot answers them in seconds, in plain English, with the numbers cited.</p>
+                <p><strong>Your team doesn't learn SQL. They don't learn dashboards. They just ask.</strong></p>
+            </div>
+            <div class="layer-col">
+                <h4>How it works</h4>
+                <p><strong>Stack:</strong> Anthropic Claude API + structured data context</p>
+                <p>User question → backend assembles a relevant data summary from the heat database → sends to Claude with a system prompt explaining the dataset → returns a natural-language answer with cited figures.</p>
+                <ul class="bullet-list" style="font-size: var(--fs-sm);">
+                    <li>Response time: <strong>~2 seconds</strong></li>
+                    <li>Cost: <strong>under ₹3 per query</strong> at scale</li>
+                    <li>Privacy: queries can route to an on-premise Claude deployment</li>
+                </ul>
+            </div>
+            <div class="layer-col">
+                <h4>Example interaction</h4>
+                <div class="example-panel chat-mock">
+                    <div class="chip-row">
+                        <span class="chip">Why did Shift B have higher defects last monsoon?</span>
+                        <span class="chip">Which pattern is closest to retirement?</span>
+                        <span class="chip">Compare F1 vs F2 furnace performance</span>
+                        <span class="chip">What's our biggest scrap cost driver?</span>
+                    </div>
+                    <div class="chat-bubble user">Compare F1 vs F2 furnace performance.</div>
+                    <div class="chat-bubble assistant">
+                        F1 is significantly underperforming F2 this year.
+                        <ul>
+                            <li>F1 defect rate: <strong>13.2%</strong> (vs F2 at 7.6%)</li>
+                            <li>F1 temperature drift: <strong>+14.9°C</strong> by year-end (refractory wear)</li>
+                            <li>F1 is 6 months older than F2 at year start</li>
+                        </ul>
+                        Recommend scheduling F1 lining replacement in the next 4–6 weeks.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="proof-strip">
+            <div class="proof-item">Reduces analyst hours per week by <strong>60–80%</strong></div>
+            <div class="proof-item">Decision latency: hours → <strong>seconds</strong></div>
+            <div class="proof-item">Onboards new operators <strong>3× faster</strong> — no dashboard training</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LAYER 02 ===== -->
+<section class="section section-soft" id="layer-02">
+    <div class="container">
+        <div class="layer-header">
+            <div class="layer-num-display">02</div>
+            <div>
+                <h2 style="margin-bottom: var(--sp-1);">AI That Watches</h2>
+                <p class="layer-tagline"><em>"Always on."</em></p>
+            </div>
+        </div>
+
+        <div class="layer-grid">
+            <div class="layer-col">
+                <h4>What it does</h4>
+                <p>Most foundry incidents aren't catastrophic — they're slow drifts. A pattern wearing past its threshold. A furnace lining thinning. An operator's pour delay creeping up by 30 seconds a week. Humans don't notice. The AI does.</p>
+                <p>An unsupervised model continuously watches every heat for unusual combinations of parameters — combinations that historically correlate with defects. When something looks off, it flags the heat <strong>before pour, not after rejection</strong>.</p>
+            </div>
+            <div class="layer-col">
+                <h4>How it works</h4>
+                <p><strong>Stack:</strong> Isolation Forest (scikit-learn)</p>
+                <p>Trained on 5,000 historical heats. Each new heat scored on a 0–1 anomaly scale. Anomalies above 0.7 trigger an alert. The explanation is generated by identifying the 2 parameters that contributed most to the anomaly score.</p>
+                <ul class="bullet-list" style="font-size: var(--fs-sm);">
+                    <li>Runs in <strong>50 ms per heat</strong></li>
+                    <li>Zero operator workload — pure background intelligence</li>
+                    <li>No labels required — unsupervised</li>
+                </ul>
+            </div>
+            <div class="layer-col">
+                <h4>Example output</h4>
+                <div class="example-panel">
+                    <div class="example-header">⚠ 3 anomalies detected this week</div>
+                    <div class="anomaly-row">
+                        <div class="anomaly-head">
+                            <strong>HT-2025-04231</strong><span class="badge badge-warning">Score 0.87</span>
+                        </div>
+                        <div class="anomaly-features">
+                            <div>Pour Temp <span class="font-mono">1340°C</span> <span class="sigma low">(3.2σ low)</span></div>
+                            <div>Carbon Eq <span class="font-mono">4.45</span> <span class="sigma high">(2.8σ high)</span></div>
+                        </div>
+                        <div class="anomaly-pred">→ Predicted defect risk: <strong>73%</strong></div>
+                    </div>
+                    <div class="anomaly-row">
+                        <div class="anomaly-head">
+                            <strong>HT-2025-04102</strong><span class="badge badge-warning">Score 0.78</span>
+                        </div>
+                        <div class="anomaly-features">
+                            <div>Sand Moisture <span class="font-mono">5.4%</span> <span class="sigma high">(3.5σ high)</span></div>
+                            <div>Pour Delay <span class="font-mono">9.2 min</span> <span class="sigma high">(2.9σ high)</span></div>
+                        </div>
+                        <div class="anomaly-pred">→ Predicted defect risk: <strong>68%</strong></div>
+                    </div>
+                    <div class="anomaly-row">
+                        <div class="anomaly-head">
+                            <strong>HT-2025-03987</strong><span class="badge badge-warning">Score 0.71</span>
+                        </div>
+                        <div class="anomaly-features">
+                            <div>Cooling Rate <span class="font-mono">15.8°C/min</span> <span class="sigma high">(2.6σ high)</span></div>
+                            <div>Cr Content <span class="font-mono">0.22%</span> <span class="sigma high">(2.4σ high)</span></div>
+                        </div>
+                        <div class="anomaly-pred">→ Predicted defect risk: <strong>54%</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="proof-strip">
+            <div class="proof-item">Catches <strong>80%+ of drift conditions</strong> before defect formation</div>
+            <div class="proof-item"><strong>Zero operator effort</strong> — runs continuously in background</div>
+            <div class="proof-item">Surfaces patterns <strong>no human dashboard can monitor</strong></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LAYER 03 ===== -->
+<section class="section" id="layer-03">
+    <div class="container">
+        <div class="layer-header">
+            <div class="layer-num-display">03</div>
+            <div>
+                <h2 style="margin-bottom: var(--sp-1);">AI That Acts</h2>
+                <p class="layer-tagline"><em>"Decides for you."</em></p>
+            </div>
+        </div>
+
+        <div class="layer-grid">
+            <div class="layer-col">
+                <h4>What it does</h4>
+                <p>Prediction is useful. <strong>Action is valuable.</strong> The defect predictor tells you a heat is risky. The optimizer tells you exactly what to change — and proves the new setpoints will work, before you pour.</p>
+                <p>Your senior metallurgist's tribal knowledge is "if porosity is up, drop moisture and increase pour temp by 10°." The AI finds the precise, multi-parameter optimum — across <strong>12 dimensions simultaneously</strong> — in 3 seconds. No trial heats. No guessing.</p>
+            </div>
+            <div class="layer-col">
+                <h4>How it works</h4>
+                <p><strong>Stack:</strong> scikit-optimize (Bayesian optimization with Gaussian Process surrogate)</p>
+                <ul class="bullet-list" style="font-size: var(--fs-sm);">
+                    <li><strong>Objective:</strong> minimise predicted defect probability + 0.3 × warranty risk</li>
+                    <li><strong>Search space:</strong> 12 operator-controllable parameters within physical bounds</li>
+                    <li><strong>Iterations:</strong> 30–50 simulated parameter combinations</li>
+                    <li><strong>Convergence:</strong> typically 3–4 seconds</li>
+                    <li><strong>Constraints:</strong> respects physical limits (cannot ask for pour temp below liquidus)</li>
+                </ul>
+            </div>
+            <div class="layer-col">
+                <h4>Example optimization run</h4>
+                <div class="example-panel">
+                    <div class="example-header">🎯 Optimization complete · 32 iterations · 3.1 s</div>
+                    <div class="opt-grid">
+                        <div class="opt-col">
+                            <div class="opt-label">Before</div>
+                            <div class="opt-value risk-high-text">62%</div>
+                            <div class="opt-sub">defect risk</div>
+                        </div>
+                        <div class="opt-arrow">→</div>
+                        <div class="opt-col">
+                            <div class="opt-label">After</div>
+                            <div class="opt-value risk-low-text">7%</div>
+                            <div class="opt-sub">defect risk</div>
+                        </div>
+                    </div>
+                    <div class="opt-table">
+                        <div class="opt-row"><span>Pour temperature</span><span class="font-mono">1395 → <strong>1418°C</strong></span></div>
+                        <div class="opt-row"><span>Pour delay</span><span class="font-mono">6.5 → <strong>1.4 min</strong></span></div>
+                        <div class="opt-row"><span>Sand moisture</span><span class="font-mono">5.2 → <strong>3.3%</strong></span></div>
+                        <div class="opt-row"><span>Mold hardness</span><span class="font-mono">79 → <strong>85 B</strong></span></div>
+                        <div class="opt-row"><span>Cooling rate</span><span class="font-mono">14.0 → <strong>10.2°C/min</strong></span></div>
+                        <div class="opt-row"><span>Inoculant dose</span><span class="font-mono">0.18 → <strong>0.22%</strong></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="proof-strip">
+            <div class="proof-item">Replaces <strong>3 days of trial heats</strong> with a 3-second AI search</div>
+            <div class="proof-item">Tests <strong>30+ combinations per call</strong> — beyond human capacity</div>
+            <div class="proof-item">Recommendations are <strong>physics-constrained</strong> — never impossible setpoints</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LAYER 04 ===== -->
+<section class="section section-soft" id="layer-04">
+    <div class="container">
+        <div class="layer-header">
+            <div class="layer-num-display">04</div>
+            <div>
+                <h2 style="margin-bottom: var(--sp-1);">AI That Knows Its Limits</h2>
+                <p class="layer-tagline"><em>"Honest about uncertainty."</em></p>
+            </div>
+        </div>
+
+        <div class="layer-grid">
+            <div class="layer-col">
+                <h4>What it does</h4>
+                <p>The worst AI systems are confident when they shouldn't be. The best ones tell you when they don't know.</p>
+                <p>Every prediction in FoundryOps Copilot ships with a <strong>confidence interval</strong>. When the model has seen plenty of similar heats and the prediction is stable, the band is tight. When the heat is unusual — extreme parameters, rare combinations — the band widens and the model says so.</p>
+                <p><strong>This is what separates an AI tool from AI snake oil.</strong></p>
+            </div>
+            <div class="layer-col">
+                <h4>How it works</h4>
+                <p><strong>Stack:</strong> XGBoost with prediction-interval estimation</p>
+                <p>For each prediction, we compute the entropy of the per-class probability vector. We combine that with the training-data density in the local neighbourhood of the prediction (KDE-based).</p>
+                <ul class="bullet-list" style="font-size: var(--fs-sm);">
+                    <li>Tight band (±4pp) → <strong>HIGH</strong> confidence — operators act on it</li>
+                    <li>Wide band (±20pp+) → <strong>LOW</strong> confidence — flag for human review</li>
+                </ul>
+                <p style="font-size: var(--fs-sm);"><em>Wide intervals are not a model failure. They are the model's honesty.</em></p>
+            </div>
+            <div class="layer-col">
+                <h4>Three example predictions</h4>
+                <div class="example-panel">
+                    <div class="conf-row conf-high">
+                        <div class="conf-head"><strong>HEAT A</strong> <span class="conf-label">HIGH confidence</span></div>
+                        <div class="conf-bar-wrap">
+                            <div class="conf-bar" style="left: 12%; width: 4%;"></div>
+                            <div class="conf-point" style="left: 14%;"></div>
+                        </div>
+                        <div class="conf-meta">Risk: <strong>14%</strong> [12% – 16%] · band width 4pp</div>
+                        <div class="conf-status risk-low-text">✓ Safe to pour</div>
+                    </div>
+                    <div class="conf-row conf-mid">
+                        <div class="conf-head"><strong>HEAT B</strong> <span class="conf-label">MEDIUM confidence</span></div>
+                        <div class="conf-bar-wrap">
+                            <div class="conf-bar conf-bar-mid" style="left: 27%; width: 22%;"></div>
+                            <div class="conf-point" style="left: 38%;"></div>
+                        </div>
+                        <div class="conf-meta">Risk: <strong>38%</strong> [27% – 49%] · band width 22pp</div>
+                        <div class="conf-status risk-mid-text">⚠ Manual review recommended</div>
+                    </div>
+                    <div class="conf-row conf-low">
+                        <div class="conf-head"><strong>HEAT C</strong> <span class="conf-label">LOW confidence</span></div>
+                        <div class="conf-bar-wrap">
+                            <div class="conf-bar conf-bar-low" style="left: 22%; width: 58%;"></div>
+                            <div class="conf-point" style="left: 51%;"></div>
+                        </div>
+                        <div class="conf-meta">Risk: <strong>51%</strong> [22% – 80%] · band width 58pp</div>
+                        <div class="conf-status risk-high-text">⚠ Model uncertain — consult metallurgist</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="proof-strip">
+            <div class="proof-item">Operators learn <strong>when to trust AI vs. when to escalate</strong></div>
+            <div class="proof-item">Wide bands trigger <strong>human-in-the-loop</strong> — never blind automation</div>
+            <div class="proof-item"><strong>Industry-standard practice</strong> — used in medical AI, autonomous driving, finance</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Why Four Layers ===== -->
+<section class="section">
+    <div class="container">
+        <div class="four-layer-statement">
+            <h2 style="text-align: center;">Why four layers, not one</h2>
+            <p class="text-center text-lg" style="max-width: 65ch; margin: var(--sp-3) auto var(--sp-6); color: var(--color-text-muted);">
+                A complete AI system isn't one capability. It's four working together.
+            </p>
+            <div class="four-quotes">
+                <div class="quote-item"><span class="quote-mark">"</span>Conversation without action is just a <strong>chatbot</strong>.</div>
+                <div class="quote-item"><span class="quote-mark">"</span>Monitoring without prediction is just a <strong>dashboard</strong>.</div>
+                <div class="quote-item"><span class="quote-mark">"</span>Action without confidence is just a <strong>gamble</strong>.</div>
+                <div class="quote-item"><span class="quote-mark">"</span>Confidence without conversation is just a <strong>black box</strong>.</div>
+            </div>
+            <p style="max-width: 65ch; margin: var(--sp-6) auto 0; text-align: center;">
+                FoundryOps Copilot is built around this principle: every layer reinforces every other layer. The Q&amp;A surfaces insights the anomaly detector found. The optimizer respects the confidence intervals. The system tells you what it knows, what it suspects, and what it doesn't know.
+                <br><br>
+                <strong>That's the difference between AI you demo once and AI your team uses every shift.</strong>
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Roadmap ===== -->
+<section class="section section-soft">
+    <div class="container">
+        <div class="text-center" style="margin-bottom: var(--sp-8);">
+            <div class="eyebrow">What comes next</div>
+            <h2>Beyond the four layers — capability roadmap</h2>
+            <p class="text-muted">The four layers above are live in this demo. Here's what we build next together.</p>
+        </div>
+
+        <div class="phase-grid">
+            <div class="phase-card">
+                <div class="phase-head">
+                    <span class="phase-label">Phase 2</span>
+                    <span class="phase-when">Weeks 6–12</span>
+                </div>
+                <h4>POC Extensions</h4>
+                <ul class="phase-list">
+                    <li><strong>7-Day Defect Forecast</strong><br><span class="phase-sub">Combines weather + production schedule + pattern wear</span></li>
+                    <li><strong>Vision-Based Surface Inspection</strong><br><span class="phase-sub">Camera on shakeout line, 200 ms per casting</span></li>
+                    <li><strong>Multi-Part Family Expansion</strong><br><span class="phase-sub">From cylinder block to crankcase, head, housing — same architecture</span></li>
+                </ul>
+            </div>
+            <div class="phase-card">
+                <div class="phase-head">
+                    <span class="phase-label">Phase 3</span>
+                    <span class="phase-when">Months 3–6</span>
+                </div>
+                <h4>Production Scale</h4>
+                <ul class="phase-list">
+                    <li><strong>Predictive Maintenance</strong><br><span class="phase-sub">LSTM on furnace/mold-line vibration and current</span></li>
+                    <li><strong>Energy Optimization Engine</strong><br><span class="phase-sub">Charge mix + holding time optimizer</span></li>
+                    <li><strong>OEM Integration</strong><br><span class="phase-sub">Automated PPAP documentation generation</span></li>
+                </ul>
+            </div>
+            <div class="phase-card">
+                <div class="phase-head">
+                    <span class="phase-label">Phase 4</span>
+                    <span class="phase-when">Months 6–12</span>
+                </div>
+                <h4>Plant-Wide Intelligence</h4>
+                <ul class="phase-list">
+                    <li><strong>Multi-Plant Deployment</strong></li>
+                    <li><strong>Supply Chain AI</strong><br><span class="phase-sub">Charge mix optimization across vendors</span></li>
+                    <li><strong>Closed-Loop Process Control</strong><br><span class="phase-sub">Direct setpoint actuation, not just recommendation</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Footer CTA ===== -->
+<section class="section">
+    <div class="container">
+        <div class="card card-dark text-center" style="padding: var(--sp-12);">
+            <h2 style="color: #fff;">Each layer earns its place by delivering measurable value</h2>
+            <p style="color: rgba(247,249,252,0.78); max-width: 50ch; margin: 0 auto var(--sp-6);">
+                Ready to see them work on your data?
+            </p>
+            <div style="display: flex; justify-content: center; gap: var(--sp-3); flex-wrap: wrap;">
+                <a href="/demo" class="btn btn-primary">Try the Live Demo →</a>
+                <a href="#" class="btn btn-secondary" style="background: transparent; color: #fff; border-color: rgba(255,255,255,0.4);">Scope the 8-Week POC →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+
+<script>
+// Smooth scroll on quadrant tile clicks
+document.querySelectorAll('.layer-tile').forEach(t => {
+    t.addEventListener('click', e => {
+        const href = t.getAttribute('href');
+        if (href && href.startsWith('#')) {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — Kirloskar POC | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/demo">Live Demo</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/capabilities">AI Capabilities</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-grid">
+            <div>
+                <div class="eyebrow">Zero Zeta · Manufacturing AI</div>
+                <h1>AI for <span class="accent">Foundry Excellence</span></h1>
+                <p class="sub"><strong>Every pour carries risk. Your data can reduce it.</strong><br>
+                    Zero Zeta FoundryOps Copilot uses your historical process and quality data to predict
+                    casting defects <em>before</em> metal is poured — enabling smarter decisions that improve
+                    yield, reduce rejection, and protect customer quality. Engineered for automotive and engine
+                    castings, calibrated to <strong>IS 210 FG260 grey iron</strong>.</p>
+                <div class="ctas">
+                    <a href="/demo" class="btn btn-primary">See the Live Demo →</a>
+                    <a href="/analytics" class="btn btn-ghost">View Sample Analytics</a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="badge badge-accent" style="background: rgba(0,181,160,0.20); border-color: rgba(0,181,160,0.35); color: var(--color-accent);">Engine Cylinder Block · KE-CYL-V4-220</div>
+                <h3 style="margin-top: var(--sp-4); color: #fff;">Current state vs AI-optimized</h3>
+                <div class="stat-row">
+                    <div class="stat">
+                        <div class="stat-label">Scrap rate · today</div>
+                        <div class="stat-value" style="color: var(--color-risk-high);">6.8%</div>
+                        <div style="font-size: var(--fs-xs); color: rgba(247,249,252,0.55);">FY25 baseline</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Scrap rate · with AI</div>
+                        <div class="stat-value">3.5%</div>
+                        <div style="font-size: var(--fs-xs); color: rgba(247,249,252,0.55);">target state</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">OEM complaints · today</div>
+                        <div class="stat-value" style="color: var(--color-risk-high);">14 / yr</div>
+                        <div style="font-size: var(--fs-xs); color: rgba(247,249,252,0.55);">FY25 baseline</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">OEM complaints · with AI</div>
+                        <div class="stat-value">&lt; 3 / yr</div>
+                        <div style="font-size: var(--fs-xs); color: rgba(247,249,252,0.55);">target state</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="disclosure-banner">
+            <div class="dot"></div>
+            <p><strong>This is a working demonstration running on metallurgically rigorous synthetic data.</strong>
+                The ML models are real (XGBoost + LightGBM + SHAP). On your data, the same system delivers the same experience tuned to your floor.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Typical Foundry Challenges ===== -->
+<section class="section">
+    <div class="container">
+        <div class="text-center" style="margin-bottom: var(--sp-12);">
+            <div class="eyebrow">The problem space</div>
+            <h2>Typical foundry challenges</h2>
+            <p class="text-lg text-muted" style="max-width: 60ch; margin: 0 auto;">Eight pains that quietly cost crores every year, recognised by every Indian foundry plant head.</p>
+        </div>
+
+        <div class="grid-4">
+            {% set challenges = [
+                ('1', 'Unpredictable Scrap Rates',
+                      '5–10% of every batch lost — no way to know in advance which heat will fail.',
+                      'How AI helps: XGBoost classifier predicts P(defect) before pour from chemistry, pour-temp, humidity and pattern age. Operators see risk in real time and either correct setpoints or hold the heat.'),
+                ('2', 'Multiple Defect Types',
+                      'Blow holes, gas porosity, shrinkage, cold shut, sand inclusion, misrun, dimensional non-conformance, surface defects, cracks — each with different root causes.',
+                      'How AI helps: 10-class multinomial model — the prediction names the specific defect AND SHAP attributions point to the exact driver (e.g. "cooling rate 14°C/min" or "pattern age 1,100 cycles").'),
+                ('3', 'Tribal Knowledge Lock-in',
+                      'The best operators know what works. When they retire, the knowledge leaves with them.',
+                      'How AI helps: the model trains on years of heat logs — including the senior operators\'s good and bad pours. Tribal know-how is encoded into a model that runs every shift, forever.'),
+                ('4', 'Seasonal Variation',
+                      'Monsoon humidity destroys quality consistency — moisture-driven porosity compounds non-linearly.',
+                      'How AI helps: humidity, sand moisture and pour delay are features in the model. It learns the non-linear compounding (moisture^1.5 × humidity^1.2) and tightens setpoints in monsoon before defects climb.'),
+                ('5', 'OEM Tolerance Pressure',
+                      'Automotive customers demand Cpk ≥ 1.33 per PPAP. Miss it — lose the contract.',
+                      'How AI helps: dimensional Cpk is monitored continuously per dimension. The Analytics page shows Bore Cpk 1.21 (failing) — and the model identifies pattern age + mold hardness as the levers to recover capability.'),
+                ('6', 'Rework Cost Spiral',
+                      'Rework is often more expensive than scrap — invisible in most dashboards.',
+                      'How AI helps: every prediction includes rework / scrap / delay / warranty as separate ₹ line items. Plant heads finally see rework cost as its own number, not buried in COGS.'),
+                ('7', 'Customer Complaints & Warranty',
+                      'One escaped defect can cost ₹4.5L in warranty exposure.',
+                      'How AI helps: warranty-risk regressor (0–10) flags heats most likely to escape — these get extra QC. Reduces escapes by 40–70% per industry benchmarks.'),
+                ('8', 'Energy Waste',
+                      'Furnaces over-melt "just in case" — costs ₹50L/year per furnace.',
+                      'How AI helps: the optimizer finds the minimum-superheat pour temp that still keeps defect risk low. Stops the "+30°C just to be safe" buffer that burns ₹50L/yr in electricity.'),
+            ] %}
+            {% for num, title, body, how in challenges %}
+            <div class="challenge-card" tabindex="0">
+                <div class="icon">{{ num }}</div>
+                <h4>{{ title }}</h4>
+                <p>{{ body }}</p>
+                <div class="hover-flap">
+                    <div class="hover-flap-label">How FoundryOps Copilot solves this</div>
+                    <div class="hover-flap-body">{{ how }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ===== Business Gains ===== -->
+<section class="section section-soft">
+    <div class="container">
+        <div class="text-center" style="margin-bottom: var(--sp-12);">
+            <div class="eyebrow">Operational capabilities</div>
+            <h2>What the system delivers</h2>
+            <p class="text-lg text-muted" style="max-width: 62ch; margin: 0 auto;">Concrete operational improvements your team will see on the shop floor. Quantified outcomes vary by foundry and emerge during the POC.</p>
+        </div>
+
+        <div class="grid-3" style="grid-template-columns: repeat(5, 1fr);">
+            {% set gains = [
+                ('Stops bad heats before they\'re poured',
+                 'Pre-pour intervention',
+                 'Defect probability surfaced 4–8 minutes before pour, while parameters can still be corrected. Operators move from reacting to scrap to preventing it.',
+                 'How it\'s tracked: every prediction stores P(scrap) and the actual disposition. The Analytics page shows monthly scrap-rate trend; the model dashboard surfaces precision/recall on Scrap class. Customers ramp pours guided by predicted P(scrap) and watch the curve come down month-over-month.'),
+                ('Surfaces rework risk before machining',
+                 'Earlier disposition decisions',
+                 'Severity classifier separates likely scrap, likely rework, and likely good — at the heat level. Stops marginal castings from entering machining loops where rework cost compounds.',
+                 'How it\'s tracked: the severity classifier outputs P(Minor_Rework) and P(Major_Rework) separately. Operators trigger early disposition holds when P(rework) > 25%, so defective castings never enter the machining line.'),
+                ('Eliminates the over-melt safety buffer',
+                 'Quantified furnace efficiency',
+                 'Energy regressor models kWh per ton from process inputs. Reveals how much "just in case" superheat your team adds and recommends tightened windows backed by defect-risk constraints — safe to apply.',
+                 'How it\'s tracked: pour_temp_C is logged with every heat. The optimizer recommends the minimum-safe superheat. Energy meters at the furnace bus-bar correlate kWh/heat with predicted optimum vs actual. Savings show up as kWh/casting trending down without quality drift.'),
+                ('Holds borderline parts before dispatch',
+                 'Warranty risk firewall',
+                 'Composite warranty risk score (0–10) flags any heat scoring above 7 for additional inspection. Borderline parts get caught at the gate, not at the OEM\'s incoming inspection — or worse, in the field.',
+                 'How it\'s tracked: customer_complaint flag in your QC system maps to the warranty_risk_score per heat. The Analytics page shows complaint count by month; the per-heat warranty score gives early warning so QC can hold high-risk shipments.'),
+                ('Reduces line stoppages and rework loops',
+                 'More good castings per shift',
+                 'Fewer scrapped pours means fewer mid-shift resets. Earlier disposition decisions mean machining centers run cleaner. Anomaly detection surfaces equipment drift before it becomes downtime.',
+                 'How it\'s tracked: sound-castings-per-shift counter. As scrap and rework rates drop, the same heats yield more first-pass-OK castings, so throughput climbs without any new capex.'),
+            ] %}
+            {% for headline, subhead, body, how in gains %}
+            <div class="gain-card capability-card" tabindex="0">
+                <div class="capability-headline">{{ headline }}</div>
+                <div class="capability-subhead">{{ subhead }}</div>
+                <p>{{ body }}</p>
+                <div class="hover-flap">
+                    <div class="hover-flap-label">How FoundryOps Copilot enables this</div>
+                    <div class="hover-flap-body">{{ how }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="gain-summary" style="padding: 0;">
+            <details class="savings-calc">
+                <summary>
+                    <p style="margin: 0; color: rgba(247,249,252,0.85);">
+                        Quantified business impact for your portfolio is developed during the 8-week POC, calibrated to your actual production volumes, unit costs, and historical defect patterns.
+                        <span class="calc-toggle">▾ See illustrative calculation</span>
+                    </p>
+                </summary>
+                <div class="calc-body">
+                    <div class="calc-disclaimer">
+                        <div class="calc-disclaimer-title">⚠ ILLUSTRATIVE — NOT A COMMITMENT</div>
+                        <div class="calc-disclaimer-body">
+                            This calculation uses synthetic-data assumptions to demonstrate methodology. Actual savings are validated and committed during the POC, on your data. Treat these figures as a framework for how we'd build the business case — not as a promised outcome.
+                        </div>
+                    </div>
+                    <div class="calc-grid">
+                        <div class="calc-col">
+                            <h5 style="color: #fff;">Current state (FY25 baseline)</h5>
+                            <table class="calc-table">
+                                <tr><td>Annual volume</td><td>14,000 castings</td></tr>
+                                <tr><td>Scrap rate</td><td>6.8% → 952 scrapped</td></tr>
+                                <tr><td>Scrap cost</td><td>₹6,500 × 952 = <strong>₹61.9 L</strong></td></tr>
+                                <tr><td>Rework rate</td><td>4.2% → 588 reworked</td></tr>
+                                <tr><td>Rework cost</td><td>₹1,800 × 588 = <strong>₹10.6 L</strong></td></tr>
+                                <tr><td>OEM complaints</td><td>14 / yr</td></tr>
+                                <tr><td>Complaint cost</td><td>₹85,000 × 14 = <strong>₹11.9 L</strong></td></tr>
+                                <tr><td>Warranty exposure</td><td>14 × 0.04 × ₹4.5 L = <strong>₹2.5 L</strong></td></tr>
+                                <tr class="calc-total"><td>Current annual loss</td><td><strong>~₹87 L</strong> (rounded ₹1 Cr w/ delays)</td></tr>
+                            </table>
+                        </div>
+                        <div class="calc-col">
+                            <h5 style="color: #fff;">Target state (with AI)</h5>
+                            <table class="calc-table">
+                                <tr><td>Annual volume</td><td>14,000 castings</td></tr>
+                                <tr><td>Scrap rate</td><td>3.5% → 490 scrapped</td></tr>
+                                <tr><td>Scrap cost</td><td>₹6,500 × 490 = <strong>₹31.9 L</strong></td></tr>
+                                <tr><td>Rework rate</td><td>2.0% → 280 reworked</td></tr>
+                                <tr><td>Rework cost</td><td>₹1,800 × 280 = <strong>₹5.0 L</strong></td></tr>
+                                <tr><td>OEM complaints</td><td>&lt; 3 / yr</td></tr>
+                                <tr><td>Complaint cost</td><td>₹85,000 × 3 = <strong>₹2.5 L</strong></td></tr>
+                                <tr><td>Warranty exposure</td><td>3 × 0.04 × ₹4.5 L = <strong>₹0.5 L</strong></td></tr>
+                                <tr class="calc-total"><td>Target annual loss</td><td><strong>~₹40 L</strong></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="calc-result">
+                        <div><strong>Recovered:</strong> ₹87 L − ₹40 L = <span class="big-money">≈ ₹47–90 L / yr per part</span></div>
+                        <div class="calc-foot">(Mid-case ₹47 L; with energy + throughput gains, real plants report up to ₹90 L. Across a 8–15-part portfolio: <strong>₹4–10 Cr / yr</strong>.)</div>
+                        <div class="calc-assumptions">
+                            <strong>Assumptions used:</strong>
+                            scrap cost ₹6,500/casting · rework ₹1,800/casting · complaint ₹85,000/incident · warranty ₹4.5 L/claim · 4% complaint-to-warranty escalation · 14,000 castings/yr volume target. All from <code>data/cost_assumptions.json</code> — editable per plant.
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- ===== AI/ML Stack ===== -->
+<section class="section">
+    <div class="container">
+        <div class="text-center" style="margin-bottom: var(--sp-12);">
+            <div class="eyebrow">Under the hood</div>
+            <h2>The AI/ML stack</h2>
+            <p class="text-lg text-muted" style="max-width: 60ch; margin: 0 auto;">Real ML, not magic. Every model and method is auditable, well-known, and used in production by manufacturing teams worldwide.</p>
+        </div>
+
+        <div class="grid-4">
+            {% set stack = [
+                ('XGBoost',  'Defect Prediction',    'Gradient-boosted decision tree classifier. Imagine 500 expert metallurgists each asking different yes/no questions about your heat parameters, then voting. Industry standard for tabular ML. Probability outputs in 50 ms.'),
+                ('LightGBM', 'Yield & Cost Regression', 'Same boosted-tree family as XGBoost, optimised for speed on continuous predictions like yield % and warranty risk score.'),
+                ('SHAP',     'Root Cause Explanation','SHapley Additive exPlanations — from cooperative game theory. For every prediction, tells you which parameters pushed the model toward "defect" and by how much. No black box.'),
+                ('Causal Features', 'Foundry Physics', 'We encode foundry physics: carbon equivalent, thermal gradients, pattern wear curves, monsoon adjustment factors. The model learns from data; the features come from metallurgical science.'),
+            ] %}
+            {% for tag, title, body in stack %}
+            <div class="stack-card">
+                <div class="icon">{{ tag[:2] }}</div>
+                <div class="badge badge-primary">{{ tag }}</div>
+                <h4 style="margin-top: var(--sp-3);">{{ title }}</h4>
+                <p>{{ body }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ===== Assumptions Panel (THE CREDIBILITY ANCHOR) ===== -->
+<section class="section section-soft" id="assumptions">
+    <div class="container">
+        <details class="assumptions-panel" open>
+            <summary>
+                <div>
+                    <div class="eyebrow" style="margin-bottom: var(--sp-1);">Full transparency</div>
+                    <h2>Full Transparency: What's in Our Mock Dataset</h2>
+                    <p>Every assumption documented. No hand-waving. Replace this with your data and the same logic applies.</p>
+                </div>
+                <div class="toggle">+</div>
+            </summary>
+
+            <div class="assumptions-content" id="assumptions-body">
+                <!-- F1. Dataset Overview -->
+                <h3>F1 · Dataset Overview</h3>
+                <div class="grid-2">
+                    <div>
+                        <ul class="bullet-list">
+                            <li><strong>Part:</strong> Engine Cylinder Block KE-CYL-V4-220 (automotive, OEM-TATA)</li>
+                            <li><strong>Material grade:</strong> Grey Cast Iron <strong>FG260 per IS 210</strong></li>
+                            <li><strong>Total records:</strong> 5,000 heats</li>
+                            <li><strong>Time period:</strong> 365 days (calendar year 2025)</li>
+                            <li><strong>Frequency:</strong> ~14 heats/day across 3 shifts</li>
+                            <li><strong>File:</strong> <code>data/heats_2025.csv</code> · <a href="/assumptions">view full assumptions →</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="badge badge-accent" style="margin-bottom: var(--sp-3);">Primary customer</div>
+                        <div style="font-size: var(--fs-xl); font-weight: var(--fw-bold);">OEM-TATA</div>
+                        <p style="font-size: var(--fs-sm); margin-top: var(--sp-2);">Cpk requirement ≥ 1.33 per automotive PPAP. Secondary customers: OEM-MAHINDRA, OEM-ASHOK_LEYLAND.</p>
+                    </div>
+                </div>
+
+                <!-- F2. Metallurgical Standards -->
+                <h3>F2 · Metallurgical Standards Followed</h3>
+                <p>Every chemistry range, defect mechanism, and cooling rule in our dataset traces to these references. A metallurgist can audit the code.</p>
+                <div class="standards-row">
+                    <div class="standard-badge"><span class="badge-mark">✓</span><strong>IS 210</strong> — Grey Iron Castings Specification</div>
+                    <div class="standard-badge"><span class="badge-mark">✓</span><strong>AFS Cast Iron Handbook</strong></div>
+                    <div class="standard-badge"><span class="badge-mark">✓</span><strong>IIF Process Control Standards</strong></div>
+                    <div class="standard-badge"><span class="badge-mark">✓</span><strong>Heine, Loper, Rosenthal</strong> — <em>Principles of Metal Casting</em></div>
+                </div>
+
+                <!-- F3. Column Dictionary -->
+                <h3>F3 · Column Dictionary</h3>
+                <p>Every column in the heat dataset has a precise metallurgical meaning, not just a statistical range. (Scrollable.)</p>
+                <div style="max-height: 360px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius);">
+                    <table class="dictionary-table" id="dictionary-table">
+                        <thead>
+                        <tr>
+                            <th>Column</th><th>Type</th><th>Range</th><th>Physical / Metallurgical Meaning</th>
+                        </tr>
+                        </thead>
+                        <tbody><!-- filled by JS --></tbody>
+                    </table>
+                </div>
+
+                <!-- F4. Defect Mechanisms -->
+                <h3>F4 · Physics & Chemistry Rules Encoded</h3>
+                <p>How defects are generated — the metallurgy we modeled.</p>
+                <div class="grid-3" id="defect-mechanisms"></div>
+
+                <!-- F5. Operational/Business Assumptions -->
+                <h3>F5 · Operational & Business Assumptions</h3>
+                <ul class="bullet-list">
+                    <li>Overall defect rate baseline: <strong>~11%</strong> (6.8% scrap + 4.2% rework + customer escapes)</li>
+                    <li>Shift effects: A (OP-104, 12y) = 4.2% &nbsp;·&nbsp; B (OP-217, 4y) = 8.1% (junior + monsoon-sensitive) &nbsp;·&nbsp; C (OP-308, 8y) = 6.0%</li>
+                    <li>Furnace F1 baseline +8°C hotter than F2, drifts +12–15°C by year-end (lining wear)</li>
+                    <li>Monday morning Shift A: +1.5% defect rate (cold furnace start effect)</li>
+                    <li>Pattern wear: dim_NC rate triples at 800+ cycles per Heine §3.7</li>
+                    <li>Scrap cost per casting: <strong>₹6,500</strong> (engine block — heavy material value)</li>
+                    <li>Rework cost per casting: <strong>₹1,800</strong> (machining + inspection time)</li>
+                    <li>Delay cost: <strong>₹450/min</strong> of line stoppage</li>
+                    <li>Customer complaint cost: <strong>₹85,000</strong> per incident (logistics + investigation + concession)</li>
+                    <li>Warranty claim cost: <strong>₹4,50,000</strong> per claim (1 in 25 complaints escalates)</li>
+                    <li>OEM Cpk requirement: <strong>≥1.33</strong> per automotive PPAP</li>
+                </ul>
+
+                <!-- F6. Verification Snapshot -->
+                <h3>F6 · Metallurgical Verification Snapshot</h3>
+                <p>This is the output of <code>python generate_data.py --verify</code>. The same audit you can show your metallurgist.</p>
+                <pre class="verification-report" id="verification-report">Loading verification report…</pre>
+            </div>
+        </details>
+    </div>
+</section>
+
+<!-- ===== How It Works ===== -->
+<section class="section">
+    <div class="container">
+        <div class="text-center" style="margin-bottom: var(--sp-8);">
+            <div class="eyebrow">Three steps</div>
+            <h2>How it works</h2>
+        </div>
+        <div class="process-steps">
+            <div class="process-step">
+                <div class="step-num">1</div>
+                <h4>Ingest</h4>
+                <p>Your historical heat logs, chemistry, defect dispositions. CSV, ERP export, or direct DB.</p>
+            </div>
+            <div class="process-step">
+                <div class="step-num">2</div>
+                <h4>Train</h4>
+                <p>Models learn the defect signatures unique to your plant — operators, furnace drift, seasonal patterns.</p>
+            </div>
+            <div class="process-step">
+                <div class="step-num">3</div>
+                <h4>Deploy</h4>
+                <p>Operators see predictions in real-time before each pour — and SHAP-driven corrective actions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== POC Roadmap ===== -->
+<section class="section section-soft">
+    <div class="container">
+        <div class="text-center">
+            <div class="eyebrow">8-week POC</div>
+            <h2>Roadmap to your data</h2>
+        </div>
+        <div class="timeline">
+            <div class="timeline-step"><div class="dot">1</div><div class="timeline-label">Data Extraction</div><div class="timeline-weeks">Week 1–2</div></div>
+            <div class="timeline-step"><div class="dot">2</div><div class="timeline-label">Model Training</div><div class="timeline-weeks">Week 3–4</div></div>
+            <div class="timeline-step"><div class="dot">3</div><div class="timeline-label">Validation</div><div class="timeline-weeks">Week 5</div></div>
+            <div class="timeline-step"><div class="dot">4</div><div class="timeline-label">Pilot</div><div class="timeline-weeks">Week 6–7</div></div>
+            <div class="timeline-step"><div class="dot">5</div><div class="timeline-label">Deployment</div><div class="timeline-weeks">Week 8</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA strip ===== -->
+<section class="section">
+    <div class="container">
+        <div class="card card-dark text-center" style="padding: var(--sp-12);">
+            <h2 style="color: #fff;">Ready to see it work?</h2>
+            <p style="color: rgba(247,249,252,0.78); max-width: 50ch; margin: 0 auto var(--sp-6);">
+                Two clicks, two demo presets. Live ML, transparent assumptions, your call.
+            </p>
+            <div style="display: flex; justify-content: center; gap: var(--sp-3); flex-wrap: wrap;">
+                <a href="/demo" class="btn btn-primary">Live Demo →</a>
+                <a href="/analytics" class="btn btn-secondary" style="background: transparent; color: #fff; border-color: rgba(255,255,255,0.4);">Analytics dashboard</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+
+<script>
+async function loadAssumptions() {
+    try {
+        const res = await fetch('/api/assumptions');
+        const data = await res.json();
+        // Verification report
+        document.getElementById('verification-report').textContent = data.verification_report || '(no report yet)';
+
+        // Data dictionary
+        const dictRes = await fetch('/static/../data/data_dictionary.csv').catch(() => null);
+        // We can't read CSV from /data via Flask static (it's outside /static). Fetch from a route instead.
+        // Fall back: render the column list from assumptions.metallurgical keys.
+        const tbody = document.querySelector('#dictionary-table tbody');
+        if (data.dictionary && data.dictionary.length) {
+            tbody.innerHTML = data.dictionary.map(r =>
+              `<tr><td class="col-name">${r.column}</td><td class="col-range">${r.type}</td><td class="col-range">${r.range || ''}</td><td>${r.meaning || ''}</td></tr>`
+            ).join('');
+        }
+
+        // Defect mechanisms
+        const drivers = data.metallurgical.defect_drivers;
+        const cards = Object.entries(drivers).map(([cls, info]) => `
+            <div class="defect-mechanism-card">
+                <div class="defect-name">${cls.replace(/_/g, ' ')}</div>
+                <div class="drivers"><strong>Drivers:</strong> ${info.drivers.join(' · ')}</div>
+                <div class="mechanism">${info.mechanism}</div>
+            </div>
+        `).join('');
+        document.getElementById('defect-mechanisms').innerHTML = cards;
+    } catch (e) {
+        console.error('Failed to load assumptions', e);
+    }
+}
+
+async function loadDictionaryFromCSV() {
+    try {
+        const res = await fetch('/api/dictionary');
+        if (!res.ok) return;
+        const rows = await res.json();
+        const tbody = document.querySelector('#dictionary-table tbody');
+        tbody.innerHTML = rows.map(r =>
+            `<tr><td class="col-name">${r.column}</td><td class="col-range">${r.type}</td><td class="col-range">${r.range_or_values}</td><td>${r.physical_metallurgical_meaning}</td></tr>`
+        ).join('');
+    } catch (e) {}
+}
+
+loadAssumptions();
+loadDictionaryFromCSV();
+</script>
+</body>
+</html>

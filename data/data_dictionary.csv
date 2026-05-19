@@ -1,0 +1,46 @@
+column,type,range_or_values,physical_metallurgical_meaning
+heat_id,string,H-2025-00001..H-2025-05000,Unique identifier per pour
+timestamp,datetime,2025-01-01..2025-12-31,Pour timestamp (IST)
+shift,categorical,"A,B,C","Production shift (A 06-14, B 14-22, C 22-06)"
+operator_id,categorical,"OP-104,OP-217,OP-308","Operator on duty — A=OP-104 (12y), B=OP-217 (4y), C=OP-308 (8y)"
+furnace_id,categorical,"F1,F2","Induction furnace; F1 lining 6 months older than F2"
+mold_line_id,categorical,"ML-1,ML-2",Mold preparation line
+pattern_id,categorical,"PT-A,PT-B,PT-C",Pattern asset
+pattern_age_cycles,int,0-1500,Pour cycles since pattern installed; wear curve drives dim_NC
+season,categorical,"Winter,Pre_monsoon,Monsoon,Post_monsoon",Indian seasonal bucket
+ambient_temp_C,float,16-38,Ambient air temperature
+ambient_humidity_pct,float,40-95,Ambient relative humidity (drives porosity)
+sand_moisture_pct,float,2.5-6.0,Green sand moisture by weight (drives porosity non-linearly)
+mold_hardness_B,float,72-92,Mold compaction hardness (B-scale)
+mold_temp_C,float,22-55,Mold temperature at pour
+binder_pct,float,1.4-2.4,Bentonite + additive percentage in sand
+mold_permeability,float,80-160,GFN permeability number
+C_pct,float,3.10-3.60,Carbon content (IS 210 FG260 range)
+Si_pct,float,1.80-2.40,Silicon content (graphitizer)
+Mn_pct,float,0.50-0.90,Manganese content (S neutralizer)
+S_pct,float,0.06-0.12,Sulphur content
+P_pct,float,0.05-0.12,Phosphorus content (improves fluidity)
+Cr_pct,float,0.00-0.20,Chromium content (carbide former — keep low)
+carbon_equivalent,float,3.85-4.45,CE = C + (Si+P)/3; eutectic band 4.0-4.3
+mn_s_ratio_ok,bool,"True,False","True if Mn >= 1.7*S + 0.3"
+pour_temp_C,float,1340-1480,Tundish pour temperature
+superheat_C,float,160-300,pour_temp_C minus liquidus (1180°C)
+pour_rate_kg_per_s,float,4.5-10.5,Mass flow during pour
+pour_delay_min,float,0-15,Tap-to-pour delay
+cooling_rate_C_per_min,float,4-22,Average cooling rate from solidus to 600°C
+fade_time_min,float,0-30,Inoculation fade time (loss of inoculant effect)
+inoculant_dose_pct,float,0.10-0.30,Inoculant addition (FeSi-based)
+core_moisture_pct,float,2.0-5.0,Core sand moisture
+furnace_temp_drift_C,float,0-18,Cumulative drift from furnace baseline this campaign
+bore_diameter_mm,float,89.40-89.60,CMM measurement — USL 89.55 LSL 89.45 (Cpk target 1.18)
+deck_height_mm,float,219.85-220.15,CMM measurement — USL 220.08 LSL 219.92 (Cpk target 1.45)
+wall_thickness_mm,float,4.15-4.85,CMM measurement — USL 4.65 LSL 4.35 (Cpk target 1.62)
+surface_roughness_Ra_um,float,2.5-9.5,Surface roughness Ra in microns
+casting_weight_kg,float,205-225,Final casting mass
+yield_pct,float,82-98,Sound casting mass / total poured mass
+defect_class,categorical,9 classes + None,Predicted defect type — see metallurgical_assumptions.json
+severity,categorical,"None,Minor_Rework,Major_Rework,Scrap",Outcome severity
+disposition,categorical,"OK,Rework,Scrap,Customer_Reject",Final disposition
+customer_complaint,bool,"True,False",Whether a customer complaint was logged downstream
+warranty_risk_score,float,0-10,Predicted warranty claim risk
+oem_customer,categorical,"OEM-TATA,OEM-MAHINDRA,OEM-ASHOK_LEYLAND",Receiving OEM

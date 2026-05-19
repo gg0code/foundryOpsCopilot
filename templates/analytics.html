@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — Analytics | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/demo">Live Demo</a>
+            <a href="/analytics" class="active">Analytics</a>
+            <a href="/capabilities">AI Capabilities</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div style="padding-top: var(--sp-6);">
+        <div class="eyebrow">5,000 heats · calendar year 2025</div>
+        <h2 style="margin-bottom: var(--sp-1);">Analytics dashboard</h2>
+        <p class="text-muted">Where the money goes, why, and how to recover it.</p>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="overview-kpis" style="margin-top: var(--sp-6);">
+        <div class="kpi-card">
+            <div class="lbl">Total heats</div>
+            <div class="val font-mono" id="kpi-heats">—</div>
+            <div class="sub">2025 YTD</div>
+        </div>
+        <div class="kpi-card danger">
+            <div class="lbl">Scrap rate</div>
+            <div class="val font-mono" id="kpi-scrap">—</div>
+            <div class="sub">target ≤ 3.5%</div>
+        </div>
+        <div class="kpi-card warning">
+            <div class="lbl">Rework rate</div>
+            <div class="val font-mono" id="kpi-rework">—</div>
+            <div class="sub">target ≤ 2.0%</div>
+        </div>
+        <div class="kpi-card accent">
+            <div class="lbl">Annual savings opportunity</div>
+            <div class="val font-mono" id="kpi-savings">—</div>
+            <div class="sub" id="kpi-savings-lbl">this part</div>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <!-- Waterfall: cost composition -->
+        <div class="chart-card span-2">
+            <h3>Business impact waterfall</h3>
+            <p class="sub">Where the ₹ losses break down across scrap, rework, complaints, warranty.</p>
+            <canvas id="chart-waterfall" height="120"></canvas>
+        </div>
+
+        <!-- Pareto -->
+        <div class="chart-card">
+            <h3>Defect Pareto — by cost</h3>
+            <p class="sub">Not by frequency. The same defect can be 10× more expensive depending on disposition.</p>
+            <canvas id="chart-pareto" height="240"></canvas>
+        </div>
+
+        <!-- Monthly trend with humidity overlay -->
+        <div class="chart-card">
+            <h3>Monthly defect rate (with humidity overlay)</h3>
+            <p class="sub">Monsoon ambient humidity directly drives gas porosity — non-linear compounding.</p>
+            <canvas id="chart-monthly" height="240"></canvas>
+        </div>
+
+        <!-- Dimensional Cpk -->
+        <div class="chart-card span-2">
+            <h3>Dimensional capability (Cpk) — OEM-TATA requires ≥ 1.33</h3>
+            <p class="sub">Bore failing the automotive PPAP requirement. Deck and Wall passing.</p>
+            <div class="grid-3" id="cpk-charts"></div>
+        </div>
+
+        <!-- Breakdowns -->
+        <div class="chart-card">
+            <h3>Shift breakdown</h3>
+            <p class="sub">Operator + shift effect on defect rate.</p>
+            <div id="break-shift"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Furnace breakdown</h3>
+            <p class="sub">F1 (older lining) drifts hotter; defects follow.</p>
+            <div id="break-furnace"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Season breakdown</h3>
+            <p class="sub">Monsoon as the dominant defect amplifier.</p>
+            <div id="break-season"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Pattern breakdown</h3>
+            <p class="sub">PT-C is closest to retirement threshold (cycles ≥ 800).</p>
+            <div id="break-pattern"></div>
+        </div>
+
+        <!-- Pattern wear curve -->
+        <div class="chart-card span-2">
+            <h3>Pattern wear curve (Heine §3.7)</h3>
+            <p class="sub">Dimensional non-conformance rate climbs sharply past 800 cycles — pattern replacement threshold.</p>
+            <canvas id="chart-wear" height="180"></canvas>
+        </div>
+
+        <!-- Correlations -->
+        <div class="chart-card">
+            <h3>Top feature correlations with defect</h3>
+            <p class="sub">Pearson correlation with binary defect indicator.</p>
+            <canvas id="chart-correlations" height="320"></canvas>
+        </div>
+
+        <!-- Model performance -->
+        <div class="chart-card">
+            <h3>Model performance</h3>
+            <p class="sub">Real ML on 5,000 heats. Trained holdout · stratified split · seed 42.</p>
+            <div id="model-metrics"></div>
+        </div>
+
+        <!-- Sample data preview -->
+        <div class="chart-card span-2">
+            <h3>Sample raw data (first 25 heats)</h3>
+            <p class="sub">Direct rows from <code>data/heats_2025.csv</code>. Replace with your data to retrain.</p>
+            <div class="sample-wrap"><table class="sample-table" id="sample-table"></table></div>
+        </div>
+    </div>
+</div>
+
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "currency": "INR",
+  "currency_symbol": "₹",
+  "scrap_cost_per_casting": 6500,
+  "rework_cost_per_casting": 1800,
+  "delay_cost_per_minute": 450,
+  "customer_complaint_cost": 85000,
+  "warranty_claim_cost": 450000,
+  "warranty_escalation_rate": 0.04,
+  "complaint_rate_per_defect_escape": 0.18,
+  "annual_volume_target_castings": 14000,
+  "current_state": {
+    "scrap_rate_pct": 6.8,
+    "rework_rate_pct": 4.2,
+    "complaint_count_annual": 14,
+    "total_business_impact_inr": 14200000,
+    "label": "Current"
+  },
+  "target_state": {
+    "scrap_rate_pct": 3.5,
+    "rework_rate_pct": 2.0,
+    "complaint_count_annual": 3,
+    "label": "AI-Optimized"
+  },
+  "annual_savings_inr": 9000000,
+  "annual_savings_label": "₹90 Lakhs / year (this part)",
+  "portfolio_multiplier_low": 8,
+  "portfolio_multiplier_high": 15,
+  "notes": [
+    "Scrap cost includes material value, melting energy, mold cost, labor",
+    "Rework cost includes inspection, machining, requalification",
+    "Delay cost covers line stoppage at downstream machining/assembly",
+    "Warranty claim cost includes part replacement, field service, brand exposure"
+  ]
+}

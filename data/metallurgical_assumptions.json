@@ -1,0 +1,125 @@
+{
+  "part": {
+    "id": "KE-CYL-V4-220",
+    "name": "Engine Cylinder Block V4 220",
+    "type": "Automotive engine cylinder block (V4, 2.2L)",
+    "primary_customer": "OEM-TATA",
+    "secondary_customers": ["OEM-MAHINDRA", "OEM-ASHOK_LEYLAND"]
+  },
+  "material": {
+    "grade": "Grey Cast Iron FG260",
+    "standard": "IS 210 (Indian Standard for Grey Iron Castings)",
+    "min_tensile_strength_mpa": 260,
+    "typical_hardness_bhn": "180-230",
+    "matrix": "Pearlitic with Type A flake graphite"
+  },
+  "references": [
+    {"name": "IS 210", "full": "Indian Standard 210 — Grey Iron Castings Specification"},
+    {"name": "AFS Cast Iron Handbook", "full": "American Foundry Society — Cast Iron Handbook"},
+    {"name": "Heine, Loper, Rosenthal", "full": "Principles of Metal Casting (Tata McGraw-Hill, 3rd ed.)"},
+    {"name": "IIF Process Standards", "full": "Institute of Indian Foundrymen — Process Control Standards"}
+  ],
+  "chemistry_ranges_pct": {
+    "C":  {"min": 3.10, "max": 3.60, "rationale": "Below 3.0% = white iron risk; above 3.7% = excessive graphite, weak matrix"},
+    "Si": {"min": 1.80, "max": 2.40, "rationale": "Graphitizer balancing C; too low = chill, too high = ferritic weakness"},
+    "Mn": {"min": 0.50, "max": 0.90, "rationale": "Sulphide control; constraint Mn ≥ 1.7·S + 0.3% to neutralize S as MnS"},
+    "S":  {"min": 0.06, "max": 0.12, "rationale": "Higher than ductile iron; balanced by Mn"},
+    "P":  {"min": 0.05, "max": 0.12, "rationale": "Improves fluidity; over 0.15% causes brittleness"},
+    "Cr": {"min": 0.00, "max": 0.20, "rationale": "Carbide former — high Cr causes hard spots and cracks"}
+  },
+  "carbon_equivalent": {
+    "formula": "CE = C + (Si + P) / 3",
+    "eutectic_band": [4.0, 4.3],
+    "hypoeutectic_penalty": "Shrinkage and cold shut risk rise sharply",
+    "hypereutectic_penalty": "Kish graphite, surface defects, weak structure"
+  },
+  "mn_s_rule": {
+    "formula": "Mn >= 1.7*S + 0.3",
+    "violation_effect": "Free FeS at grain boundaries → hot tear, cracks, hard spots"
+  },
+  "pour_temperature": {
+    "liquidus_C": 1180,
+    "min_pour_C": 1380,
+    "optimal_pour_C": [1400, 1430],
+    "max_safe_pour_C": 1460,
+    "low_pour_effect": "Cold shut / misrun probability rises sigmoidally below 1380°C; 4-5× at 1340°C vs 1380°C",
+    "high_pour_effect": "Above 1460°C: hydrogen pickup, mold burn-on, gas porosity"
+  },
+  "porosity_mechanism": {
+    "formula": "P(porosity) ∝ (sand_moisture)^1.5 × (humidity/100)^1.2 × (pour_delay)^0.8",
+    "mechanism": "H2O dissociates at metal surface → atomic hydrogen absorbed in melt → rejected during solidification → gas porosity",
+    "monsoon_multiplier_target": 2.4
+  },
+  "cooling_rate_C_per_min": {
+    "too_slow": {"range": [0, 6], "effect": "Coarse graphite, weak section"},
+    "optimal": {"range": [8, 12], "effect": "Fine pearlitic matrix — target microstructure"},
+    "fast": {"range": [12, 16], "effect": "Fine graphite, harder iron"},
+    "too_fast": {"range": [16, 30], "effect": "Chill formation, white iron, cracks, hard spots"}
+  },
+  "pattern_wear_curve": {
+    "0_to_500_cycles": "Baseline dim_NC rate",
+    "500_to_800_cycles": "Dim_NC rate +50%",
+    "800_to_1200_cycles": "Dim_NC rate 3× baseline (replacement threshold)",
+    "above_1200_cycles": "Dim_NC rate 5× baseline — pattern should be retired"
+  },
+  "furnace_drift": {
+    "new_lining_accuracy_C": 5,
+    "drift_at_500_heats_C": [8, 10],
+    "drift_at_700_plus_C": [12, 15],
+    "F1_vs_F2": "F1 lining 6 months older than F2 at year start; F1 baseline ~8°C hotter"
+  },
+  "dimensional_tolerances": {
+    "Bore_Diameter_mm":   {"target": 89.500, "USL": 89.55, "LSL": 89.45, "target_Cpk": 1.18, "note": "Intentionally failing OEM-TATA 1.33 requirement — drives demo narrative"},
+    "Deck_Height_mm":     {"target": 220.000, "USL": 220.08, "LSL": 219.92, "target_Cpk": 1.45},
+    "Wall_Thickness_mm":  {"target": 4.50,  "USL": 4.65,  "LSL": 4.35,  "target_Cpk": 1.62},
+    "Surface_Roughness_Ra_um": {"max": 6.3}
+  },
+  "OEM_Cpk_requirement": {"value": 1.33, "standard": "Automotive PPAP (Production Part Approval Process)"},
+  "seasons_india": {
+    "Winter":       {"months": [12, 1, 2],     "humidity_pct": [40, 60], "ambient_C": [16, 24]},
+    "Pre_monsoon":  {"months": [3, 4, 5],      "humidity_pct": [50, 65], "ambient_C": [28, 38]},
+    "Monsoon":      {"months": [6, 7, 8, 9],   "humidity_pct": [75, 95], "ambient_C": [26, 32]},
+    "Post_monsoon": {"months": [10, 11],       "humidity_pct": [55, 70], "ambient_C": [22, 30]}
+  },
+  "operators": {
+    "OP-104": {"shift": "A", "experience_years": 12, "baseline_defect_pct": 4.2, "notes": "Senior operator, lowest defect rate"},
+    "OP-217": {"shift": "B", "experience_years": 4,  "baseline_defect_pct": 8.1, "notes": "Junior + monsoon-sensitive — key story detail"},
+    "OP-308": {"shift": "C", "experience_years": 8,  "baseline_defect_pct": 6.0, "notes": "Mid-senior, night shift"}
+  },
+  "monday_morning_shift_A_penalty_pct": 1.5,
+  "defect_classes": [
+    "None", "Blow_Holes", "Gas_Porosity", "Shrinkage", "Cold_Shut",
+    "Misrun", "Sand_Inclusion", "Dimensional_NC", "Surface_Defects", "Cracks"
+  ],
+  "defect_drivers": {
+    "Blow_Holes":      {"drivers": ["core moisture > 3%", "binder gas evolution", "low mold permeability"],            "mechanism": "Water vapor and binder gas trapped during solidification",                                      "typical_severity": "Minor_Rework"},
+    "Gas_Porosity":    {"drivers": ["sand_moisture^1.5", "humidity^1.2", "pour_delay^0.8"],                              "mechanism": "Hydrogen dissociation from moisture, dissolved in melt, rejected at solidification",         "typical_severity": "Major_Rework"},
+    "Shrinkage":       {"drivers": ["pour temp < 1380°C", "CE < 4.0 hypoeutectic", "thick sections without risers"],     "mechanism": "Insufficient feeding during liquid-to-solid contraction",                                   "typical_severity": "Scrap"},
+    "Cold_Shut":       {"drivers": ["pour temp < 1370°C", "pour delay > 8 min"],                                         "mechanism": "Insufficient superheat — metal streams solidify before fusion",                              "typical_severity": "Scrap"},
+    "Misrun":          {"drivers": ["pour temp < 1360°C", "pour rate < 6 kg/s", "thin sections + cold mold"],            "mechanism": "Metal freezes before filling cavity",                                                        "typical_severity": "Scrap"},
+    "Sand_Inclusion":  {"drivers": ["mold hardness < 78", "binder < 1.7%", "moisture > 5%", "high pour rate erosion"],   "mechanism": "Mold wall erosion under metal flow stress",                                                  "typical_severity": "Major_Rework"},
+    "Dimensional_NC":  {"drivers": ["pattern age (3× rate >800 cycles)", "mold rigidity variance", "thermal expansion"], "mechanism": "Pattern dimensional drift + thermal contraction variability",                                "typical_severity": "Minor_Rework"},
+    "Surface_Defects": {"drivers": ["mold temp > 40°C", "binder excess", "mold-metal reactions"],                        "mechanism": "Thermal degradation of mold surface, vein defects",                                          "typical_severity": "Minor_Rework"},
+    "Cracks":          {"drivers": ["cooling rate > 14°C/min", "Cr > 0.2%", "P > 0.06%", "mold restraint"],              "mechanism": "Hot tear (during solidification) or cold crack (post-solidification residual stress)",       "typical_severity": "Scrap"}
+  },
+  "severity_distribution": {
+    "Blow_Holes":      {"Minor_Rework": 0.35, "Major_Rework": 0.30, "Scrap": 0.35},
+    "Gas_Porosity":    {"Minor_Rework": 0.20, "Major_Rework": 0.25, "Scrap": 0.55},
+    "Shrinkage":       {"Minor_Rework": 0.05, "Major_Rework": 0.10, "Scrap": 0.85},
+    "Cold_Shut":       {"Minor_Rework": 0.05, "Major_Rework": 0.10, "Scrap": 0.85},
+    "Misrun":          {"Minor_Rework": 0.02, "Major_Rework": 0.06, "Scrap": 0.92},
+    "Sand_Inclusion":  {"Minor_Rework": 0.25, "Major_Rework": 0.25, "Scrap": 0.50},
+    "Dimensional_NC":  {"Minor_Rework": 0.35, "Major_Rework": 0.20, "Scrap": 0.45},
+    "Surface_Defects": {"Minor_Rework": 0.55, "Major_Rework": 0.25, "Scrap": 0.20},
+    "Cracks":          {"Minor_Rework": 0.02, "Major_Rework": 0.06, "Scrap": 0.92}
+  },
+  "dataset": {
+    "rows": 5000,
+    "time_window_days": 365,
+    "heats_per_day_avg": 14,
+    "shifts": ["A", "B", "C"],
+    "furnaces": ["F1", "F2"],
+    "mold_lines": ["ML-1", "ML-2"],
+    "patterns": ["PT-A", "PT-B", "PT-C"]
+  }
+}

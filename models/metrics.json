@@ -1,0 +1,192 @@
+{
+  "defect_classifier": {
+    "accuracy": 0.896,
+    "balanced_accuracy": 0.1738,
+    "target": 0.82,
+    "classes": [
+      "Blow_Holes",
+      "Cold_Shut",
+      "Cracks",
+      "Dimensional_NC",
+      "Gas_Porosity",
+      "Misrun",
+      "None",
+      "Sand_Inclusion",
+      "Shrinkage",
+      "Surface_Defects"
+    ],
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        23,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        21,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        13,
+        9,
+        0,
+        880,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "severity_classifier": {
+    "accuracy": 0.909,
+    "balanced_accuracy": 0.2892,
+    "target": 0.78,
+    "classes": [
+      "Major_Rework",
+      "Minor_Rework",
+      "None",
+      "Scrap"
+    ],
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        20,
+        0
+      ],
+      [
+        0,
+        0,
+        23,
+        1
+      ],
+      [
+        0,
+        0,
+        901,
+        6
+      ],
+      [
+        0,
+        0,
+        41,
+        8
+      ]
+    ]
+  },
+  "yield_regressor": {
+    "r2": 0.6799,
+    "mae_pct": 0.7174,
+    "target_r2": 0.75
+  },
+  "warranty_regressor": {
+    "r2": 0.7293,
+    "mae": 0.3821,
+    "target_r2": 0.7
+  },
+  "n_train_rows": 4000,
+  "n_test_rows": 1000,
+  "n_features": 44,
+  "seed": 42
+}
