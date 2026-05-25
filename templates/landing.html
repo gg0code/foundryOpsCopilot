@@ -20,7 +20,12 @@
             <span class="logo-divider">·</span>
             <span>FoundryOps Copilot</span>
         </a>
-        <div class="nav-links">
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-nav">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="primary-nav">
             <a href="/" class="active">Home</a>
             <a href="/demo">Live Demo</a>
             <a href="/analytics">Analytics</a>
@@ -144,7 +149,7 @@
             <p class="text-lg text-muted" style="max-width: 62ch; margin: 0 auto;">Concrete operational improvements your team will see on the shop floor. Quantified outcomes vary by foundry and emerge during the POC.</p>
         </div>
 
-        <div class="grid-3" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="grid-5">
             {% set gains = [
                 ('Stops bad heats before they\'re poured',
                  'Pre-pour intervention',
@@ -314,7 +319,7 @@
                 <!-- F3. Column Dictionary -->
                 <h3>F3 · Column Dictionary</h3>
                 <p>Every column in the heat dataset has a precise metallurgical meaning, not just a statistical range. (Scrollable.)</p>
-                <div style="max-height: 360px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius);">
+                <div style="max-height: 360px; overflow: auto; border: 1px solid var(--color-border); border-radius: var(--radius);">
                     <table class="dictionary-table" id="dictionary-table">
                         <thead>
                         <tr>
@@ -480,5 +485,6 @@ async function loadDictionaryFromCSV() {
 loadAssumptions();
 loadDictionaryFromCSV();
 </script>
+<script src="{{ url_for('static', filename='js/nav.js') }}"></script>
 </body>
 </html>
