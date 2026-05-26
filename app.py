@@ -6,7 +6,9 @@ Routes:
     GET  /demo                      Interactive prediction demo
     GET  /analytics                 Analytics dashboard
     GET  /capabilities              Descriptive page covering the four AI capabilities
+    GET  /ask                       Conversational assistant page (AI That Converses)
     POST /api/predict               Predict defect + yield + warranty from heat parameters
+    POST /api/ask                   Answer foundry questions with Claude (grounded in dataset summary)
     GET  /api/assumptions           Full metallurgical + cost assumptions JSON
     GET  /api/dictionary            Parsed data dictionary CSV
     GET  /api/model_info            Model accuracy + feature names + class lists
@@ -17,6 +19,7 @@ Routes:
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import webbrowser
@@ -204,6 +207,193 @@ def compute_business_impact(severity_probs: dict, customer_complaint_p: float,
 
 
 # ------------------------------------------------------------------
+# Conversational assistant (/ask) — "AI That Converses"
+#
+# Answers foundry questions with Claude, grounded in a deterministic summary
+# of heats_2025.csv. The summary is built ONCE at startup and placed in the
+# cached system prompt (prompt caching), so the volatile content per request
+# is only the user's conversation. Degrades gracefully: if the anthropic SDK
+# isn't installed or ANTHROPIC_API_KEY is unset, the rest of the demo is
+# unaffected and /api/ask returns a friendly "not configured" message.
+# ------------------------------------------------------------------
+
+ANTHROPIC_MODEL = "claude-opus-4-7"
+MAX_ASK_MESSAGES = 20        # cap conversation length sent to the API
+MAX_ASK_CHARS = 2000         # cap per-message length
+
+try:
+    import anthropic
+except ImportError:           # SDK optional — demo runs without it
+    anthropic = None
+
+
+def _init_claude():
+    """Return an Anthropic client if the SDK is installed and a key is set, else None."""
+    if anthropic is None or not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    try:
+        return anthropic.Anthropic()
+    except Exception as ex:   # bad key format, etc. — don't crash the app
+        print(f"==> Claude client init failed ({ex}); /ask will report 'not configured'.")
+        return None
+
+
+def _lakh(x: float) -> str:
+    return f"₹{x / 1e5:.1f} L"
+
+
+def build_ask_context() -> str:
+    """Assemble a deterministic, cache-friendly text summary of the heat dataset.
+
+    Built once at startup and placed in the cached system prompt for /api/ask.
+    Determinism matters: pandas groupby sorts keys, and there are no timestamps
+    or random values, so the rendered bytes are stable across requests and the
+    prompt cache prefix stays valid.
+    """
+    lines: list[str] = []
+    n = len(DF)
+    t_min = DF["timestamp"].min().strftime("%Y-%m-%d")
+    t_max = DF["timestamp"].max().strftime("%Y-%m-%d")
+
+    lines.append("=== DATASET SUMMARY (synthetic; part KE-CYL-V4-220, FG260 IS 210, OEM-TATA) ===")
+    lines.append(f"Records: {n:,} heats. Period: {t_min} to {t_max}. ~14 heats/day across 3 shifts.")
+
+    scrap = (DF["disposition"] == "Scrap").mean() * 100
+    rework = (DF["disposition"] == "Rework").mean() * 100
+    comp = (DF["disposition"] == "Customer_Reject").mean() * 100
+    defect = (DF["defect_class"] != "None").mean() * 100
+    lines.append(f"Overall: defect rate {defect:.1f}%, scrap {scrap:.1f}%, rework {rework:.1f}%, customer rejects {comp:.2f}%.")
+
+    n_scrap = int((DF["disposition"] == "Scrap").sum())
+    n_rework = int((DF["disposition"] == "Rework").sum())
+    n_comp = int((DF["disposition"] == "Customer_Reject").sum())
+    scrap_cost = n_scrap * COSTS["scrap_cost_per_casting"]
+    rework_cost = n_rework * COSTS["rework_cost_per_casting"]
+    comp_cost = n_comp * COSTS["customer_complaint_cost"]
+    warr_cost = n_comp * COSTS["warranty_escalation_rate"] * COSTS["warranty_claim_cost"]
+    total_cost = scrap_cost + rework_cost + comp_cost + warr_cost
+    lines.append(
+        f"Cost of poor quality across the dataset: scrap {_lakh(scrap_cost)} ({n_scrap} castings), "
+        f"rework {_lakh(rework_cost)} ({n_rework}), complaints {_lakh(comp_cost)} ({n_comp}), "
+        f"warranty reserve {_lakh(warr_cost)}; total {_lakh(total_cost)}."
+    )
+    lines.append(
+        f"Annual savings opportunity for this part: {COSTS.get('annual_savings_label', '')} "
+        f"(~₹{COSTS['annual_savings_inr'] / 1e5:.0f} L)."
+    )
+
+    sc, rc, cc = COSTS["scrap_cost_per_casting"], COSTS["rework_cost_per_casting"], COSTS["customer_complaint_cost"]
+    pareto = []
+    for cls, sub in DF[DF["defect_class"] != "None"].groupby("defect_class"):
+        s = int((sub["disposition"] == "Scrap").sum())
+        r = int((sub["disposition"] == "Rework").sum())
+        c = int((sub["disposition"] == "Customer_Reject").sum())
+        pareto.append((cls, len(sub), s * sc + r * rc + c * cc))
+    pareto.sort(key=lambda x: -x[2])
+    lines.append("Defects by total cost (highest first):")
+    for cls, cnt, cost in pareto:
+        lines.append(f"  - {cls.replace('_', ' ')}: {cnt} heats, {_lakh(cost)}")
+
+    def breakdown(col: str, label: str) -> list[str]:
+        out = [f"{label} (defect rate / scrap rate):"]
+        for k, sub in DF.groupby(col):
+            dr = (sub["defect_class"] != "None").mean() * 100
+            sr = (sub["disposition"] == "Scrap").mean() * 100
+            out.append(f"  - {k}: {dr:.1f}% / {sr:.1f}% (n={len(sub)})")
+        return out
+
+    lines += breakdown("shift", "By shift")
+    lines += breakdown("furnace_id", "By furnace")
+    lines += breakdown("season", "By season")
+    lines += breakdown("pattern_id", "By pattern")
+
+    lines.append("Monthly defect rate and average humidity:")
+    for m, sub in DF.groupby("month"):
+        dr = (sub["defect_class"] != "None").mean() * 100
+        hum = sub["ambient_humidity_pct"].mean()
+        por = (sub["defect_class"] == "Gas_Porosity").mean() * 100
+        lines.append(f"  - Month {int(m):02d}: defect {dr:.1f}%, humidity {hum:.0f}%, gas-porosity {por:.1f}%")
+
+    tols = ASSUMPTIONS.get("dimensional_tolerances", {})
+    lines.append("Dimensional capability (Cpk; OEM-TATA requires >= 1.33):")
+    for label, col, key in (("Bore diameter", "bore_diameter_mm", "Bore_Diameter_mm"),
+                            ("Deck height", "deck_height_mm", "Deck_Height_mm"),
+                            ("Wall thickness", "wall_thickness_mm", "Wall_Thickness_mm")):
+        if key in tols and col in DF:
+            mu, sd = DF[col].mean(), DF[col].std()
+            if sd > 0:
+                cpk = min((tols[key]["USL"] - mu) / (3 * sd), (mu - tols[key]["LSL"]) / (3 * sd))
+                lines.append(f"  - {label}: Cpk {cpk:.2f} ({'PASS' if cpk >= 1.33 else 'FAIL'})")
+
+    lines.append("Pattern wear — dimensional-NC rate by pattern age (retire ~1200 cycles; triples past 800):")
+    for lo, hi in [(0, 400), (400, 800), (800, 1200), (1200, 1500)]:
+        sub = DF[(DF["pattern_age_cycles"] >= lo) & (DF["pattern_age_cycles"] < hi)]
+        if len(sub):
+            dnc = (sub["defect_class"] == "Dimensional_NC").mean() * 100
+            lines.append(f"  - {lo}-{hi} cycles: {dnc:.1f}% dim-NC (n={len(sub)})")
+
+    is_def = (DF["defect_class"] != "None").astype(int)
+    corrs = []
+    for f in NUMERIC_FEATURES:
+        if f in DF:
+            cval = DF[f].corr(is_def)
+            if np.isfinite(cval):
+                corrs.append((f, float(cval)))
+    corrs.sort(key=lambda x: -abs(x[1]))
+    lines.append("Top correlations with 'any defect':")
+    for f, cval in corrs[:10]:
+        lines.append(f"  - {f}: {cval:+.2f}")
+
+    lines.append(
+        "Key cost assumptions: scrap ₹{:,}/casting, rework ₹{:,}/casting, complaint ₹{:,}/incident, "
+        "warranty ₹{:,}/claim ({:.0%} of complaints escalate), delay ₹{:,}/min.".format(
+            COSTS["scrap_cost_per_casting"], COSTS["rework_cost_per_casting"], COSTS["customer_complaint_cost"],
+            COSTS["warranty_claim_cost"], COSTS["warranty_escalation_rate"], COSTS["delay_cost_per_minute"])
+    )
+    lines.append(
+        "Metallurgy: FG260 grey iron; C 3.1-3.6%, Si 1.8-2.4%, Mn 0.5-0.9%, S 0.06-0.12%; Mn/S rule Mn>=1.7*S+0.3; "
+        "carbon equivalent CE=C+(Si+P)/3 target 4.0-4.3; pour temp 1400-1430C (liquidus ~1180C + 220-250C superheat)."
+    )
+    lines.append(
+        "Story facts: Shift A (OP-104, senior) lowest defects; Shift B (OP-217, junior, monsoon-sensitive) highest; "
+        "Shift C (OP-308) mid. Furnace F1 runs ~8C hotter than F2 and drifts +12-15C by year-end (lining wear). "
+        "Bore Cpk currently FAILS the OEM-TATA 1.33 requirement; Deck and Wall pass."
+    )
+    lines.append(
+        "AI capabilities in this system: defect & severity classifiers (XGBoost), yield & warranty regressors (LightGBM), "
+        "SHAP root-cause attribution, continuous anomaly detection (AI That Watches), Bayesian setpoint optimizer "
+        "(AI That Acts), and per-prediction confidence bands with human-in-the-loop review (AI That Knows Its Limits)."
+    )
+    return "\n".join(lines)
+
+
+ASK_SYSTEM_PREAMBLE = (
+    "You are FoundryOps Copilot, Zero Zeta's conversational assistant for a foundry operations demo built for "
+    "Kirloskar. You answer questions about ONE demonstration dataset: the casting-heat history for a single engine "
+    "cylinder block (KE-CYL-V4-220, Grey Cast Iron FG260 per IS 210, primary customer OEM-TATA). This is "
+    "metallurgically rigorous SYNTHETIC data, not real customer data — be upfront about that if asked.\n\n"
+    "Ground every answer in the DATASET SUMMARY below. Rules:\n"
+    "- Cite concrete numbers from the summary (rates, ₹ costs, Cpk, correlations). Use ₹ and lakh/crore.\n"
+    "- Be concise and direct: a short paragraph or a tight bullet list. This is a live demo — no long essays.\n"
+    "- If something isn't in the summary, say what you can reasonably infer and note the limitation; never invent "
+    "specific numbers.\n"
+    "- For 'what setpoint / how do we fix X' questions, give practical, physics-aware guidance grounded in the "
+    "breakdowns (monsoon humidity, pattern wear past 800 cycles, furnace F1 drift, Bore Cpk failing) and frame it as "
+    "what the optimizer (AI That Acts) would target — directional advice is fine, but make clear exact setpoints "
+    "come from the model on real data.\n"
+    "- For 'how confident / when to trust the AI' questions, answer in terms of confidence bands and human-in-the-loop "
+    "review (AI That Knows Its Limits): wide bands on rare or extreme conditions get flagged for a metallurgist.\n"
+    "- Never promise committed percentage outcomes; describe capabilities and the data, not guarantees.\n"
+    "- Plain text or simple markdown (bold, hyphen bullets) only. No tables, no code blocks."
+)
+
+ASK_DATA_SUMMARY = build_ask_context()
+ASK_SYSTEM_PROMPT = ASK_SYSTEM_PREAMBLE + "\n\n" + ASK_DATA_SUMMARY
+claude_client = _init_claude()
+print(f"==> Conversational /ask: {'ENABLED' if claude_client else 'disabled (set ANTHROPIC_API_KEY to enable)'}.")
+
+
+# ------------------------------------------------------------------
 # Page routes
 # ------------------------------------------------------------------
 
@@ -225,6 +415,12 @@ def analytics():
 @app.route("/capabilities")
 def capabilities():
     return render_template("capabilities.html")
+
+
+@app.route("/ask")
+def ask_page():
+    """Conversational assistant page (AI That Converses)."""
+    return render_template("ask.html", assistant_enabled=bool(claude_client))
 
 
 @app.route("/assumptions")
@@ -327,6 +523,76 @@ def predict():
         "root_causes": root_causes,
         "latency_ms": round(latency_ms, 1),
     })
+
+
+# ------------------------------------------------------------------
+# API: conversational assistant
+# ------------------------------------------------------------------
+
+@app.route("/api/ask", methods=["POST"])
+def api_ask():
+    """Answer a foundry question with Claude, grounded in the cached dataset summary.
+
+    Accepts either {"messages": [{role, content}, ...]} for multi-turn chat, or a
+    single {"question": "..."}. Returns {"answer", "latency_ms", "usage"}.
+    """
+    if claude_client is None:
+        return jsonify({
+            "error": "not_configured",
+            "answer": ("The conversational assistant isn't configured on this server yet. "
+                       "Install the SDK (`pip install anthropic`) and set the ANTHROPIC_API_KEY "
+                       "environment variable to enable it — the rest of the demo works without it."),
+        }), 503
+
+    payload = request.get_json(force=True, silent=True) or {}
+    raw_messages = payload.get("messages")
+    if not raw_messages:
+        q = (payload.get("question") or "").strip()
+        raw_messages = [{"role": "user", "content": q}] if q else []
+
+    # Sanitize: keep only well-formed user/assistant text turns, cap count and length,
+    # and ensure the history starts on a user turn (Messages API requirement).
+    messages = []
+    for m in raw_messages[-MAX_ASK_MESSAGES:]:
+        role, content = m.get("role"), m.get("content")
+        if role in ("user", "assistant") and isinstance(content, str) and content.strip():
+            messages.append({"role": role, "content": content[:MAX_ASK_CHARS]})
+    while messages and messages[0]["role"] != "user":
+        messages.pop(0)
+    if not messages:
+        return jsonify({"error": "empty", "answer": "Please type a question."}), 400
+
+    try:
+        t0 = time.perf_counter()
+        resp = claude_client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=1500,
+            output_config={"effort": "medium"},
+            # Stable summary in the cached system block; only the conversation varies.
+            system=[{
+                "type": "text",
+                "text": ASK_SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }],
+            messages=messages,
+        )
+        answer = "".join(b.text for b in resp.content if b.type == "text").strip()
+        u = resp.usage
+        return jsonify({
+            "answer": answer or "(The assistant returned an empty response — try rephrasing.)",
+            "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "usage": {
+                "input_tokens": getattr(u, "input_tokens", None),
+                "output_tokens": getattr(u, "output_tokens", None),
+                "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", None),
+                "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", None),
+            },
+        })
+    except anthropic.APIError as ex:
+        msg = getattr(ex, "message", str(ex))
+        return jsonify({"error": "api_error", "answer": f"The assistant hit an API error: {msg}"}), 502
+    except Exception as ex:
+        return jsonify({"error": "server_error", "answer": f"Unexpected error: {ex}"}), 500
 
 
 # ------------------------------------------------------------------

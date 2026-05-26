@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FoundryOps Copilot — Ask AI | Zero Zeta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+            <span class="logo-divider">·</span>
+            <span>FoundryOps Copilot</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-nav">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="primary-nav">
+            <a href="/">Home</a>
+            <a href="/demo">Live Demo</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/capabilities">AI Capabilities</a>
+            <a href="/ask" class="active">Ask AI</a>
+            <span class="demo-badge">DEMO · synthetic data</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div style="padding-top: var(--sp-6);">
+        <div class="eyebrow">AI that converses</div>
+        <h2 style="margin-bottom: var(--sp-1);">Ask the FoundryOps Copilot</h2>
+        <p class="text-muted">Plain-English questions about the KE-CYL-V4-220 heat data — no SQL, no dashboards. Powered by Claude, grounded in the demo dataset.</p>
+    </div>
+
+    {% if not assistant_enabled %}
+    <div class="ask-notice">
+        <strong>Assistant not configured.</strong> Set <code>ANTHROPIC_API_KEY</code> on the server
+        (and <code>pip install anthropic</code>) to enable live answers. The example queries below show what it can do.
+    </div>
+    {% endif %}
+
+    <div class="ask-layout">
+        <!-- ===== Chat column ===== -->
+        <main class="ask-chat">
+            <div class="ask-messages" id="ask-messages" aria-live="polite">
+                <div class="ask-bubble assistant">
+                    <div class="ask-bubble-body">
+                        <p>Hi — I'm the <strong>FoundryOps Copilot</strong>. Ask me anything about this part's heat data:
+                        scrap and rework costs, shift and furnace performance, the monsoon defect spike, Bore Cpk, or
+                        what the optimizer would change to cut risk.</p>
+                        <p class="text-soft" style="font-size: var(--fs-xs); margin: 0;">Answers are grounded in metallurgically rigorous <strong>synthetic</strong> demo data.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form class="ask-inputbar" id="ask-form" autocomplete="off">
+                <textarea id="ask-input" rows="1" placeholder="Ask about defects, costs, shifts, Cpk, setpoints…" maxlength="2000"></textarea>
+                <button type="submit" id="ask-send" aria-label="Send">Send</button>
+            </form>
+            <div class="ask-foot">
+                <span id="ask-status"></span>
+                <a href="#" id="ask-clear">Clear conversation</a>
+            </div>
+        </main>
+
+        <!-- ===== Example queries ===== -->
+        <aside class="ask-examples">
+            <h3>Try an example</h3>
+            <p class="sub">Click any question to ask it.</p>
+
+            {% set groups = [
+                ('AI That Converses', 'g1', [
+                    "What's our overall scrap and rework rate this year?",
+                    "What's our biggest scrap cost driver?",
+                    "Which defect type costs us the most money?",
+                    "Compare F1 vs F2 furnace performance.",
+                    "Compare Shift A, B and C defect rates.",
+                    "Why did Shift B have higher defects last monsoon?",
+                    "Which month had the worst defect rate and why?",
+                    "How does humidity correlate with gas porosity?",
+                    "How much is rework costing us annually?",
+                    "What's the total annual cost of poor quality for this part?",
+                    "Which OEM requirement are we currently failing?",
+                    "Break down defects by season."
+                ]),
+                ('AI That Watches', 'g2', [
+                    "What early-warning signs precede a bad pour?",
+                    "Is furnace F1 drifting, and by how much?",
+                    "Which pattern is closest to retirement?",
+                    "What would the system flag for QC before dispatch?",
+                    "How does the AI detect drift before defects appear?",
+                    "Which shift needs the most monitoring attention?",
+                    "At what sand-moisture level does defect risk start climbing?",
+                    "How does pattern wear past 800 cycles change defects?"
+                ]),
+                ('AI That Acts', 'g3', [
+                    "What pour temperature would you recommend to cut porosity?",
+                    "How can we recover Bore Cpk to 1.33?",
+                    "What setpoints minimize defect risk during monsoon?",
+                    "Recommend changes to reduce scrap on Shift B.",
+                    "Which three levers most reduce our defect rate?",
+                    "What's a safe way to cut the over-melt energy buffer?",
+                    "How would you re-tune the process for a junior operator?",
+                    "What carbon-equivalent target should we hold for FG260?"
+                ]),
+                ('AI That Knows Its Limits', 'g4', [
+                    "How confident should we be about monsoon predictions?",
+                    "When should an operator override the AI?",
+                    "Which predictions carry the widest uncertainty?",
+                    "What conditions make the model least reliable?",
+                    "Why might a prediction be flagged for human review?",
+                    "What does a wide confidence band mean for a pour?"
+                ])
+            ] %}
+
+            {% for title, gid, qs in groups %}
+            <div class="ask-example-group {{ gid }}">
+                <div class="ask-example-title">{{ title }}</div>
+                {% for q in qs %}
+                <button type="button" class="ask-chip" data-q="{{ q }}">{{ q }}</button>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </aside>
+    </div>
+</div>
+
+<footer class="site-footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);">
+            <div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2);">
+                    <img src="{{ url_for('static', filename='img/zerozeta-logo.png') }}" alt="Zero Zeta" class="logo-img">
+                    <strong style="font-size: var(--fs-md); color: #fff; margin-left: var(--sp-1);">· FoundryOps Copilot</strong>
+                </div>
+                <p>Built by Zero Zeta · Proof of Concept for Kirloskar</p>
+            </div>
+            <div class="demo-badge">DEMO · Trained on synthetic data</div>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/ask.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+</body>
+</html>

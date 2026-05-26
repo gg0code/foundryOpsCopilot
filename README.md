@@ -100,6 +100,24 @@ python train_model.py
 python app.py
 ```
 
+### Enabling the "Ask AI" page (`/ask`)
+
+The conversational assistant calls the Claude API. It is **optional** — every other
+page works without it. To turn it on, set an API key before starting the server:
+
+```bash
+# macOS / Linux
+export ANTHROPIC_API_KEY=sk-ant-...
+# Windows PowerShell
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+
+python app.py
+```
+
+If the key is unset, `/ask` loads and shows a "not configured" notice; the rest of
+the demo is unaffected. Answers are grounded in a summary of `data/heats_2025.csv`
+(model: `claude-opus-4-7`); the summary sits in a cached system prompt.
+
 ---
 
 ## Data files inventory
