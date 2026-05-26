@@ -42,6 +42,15 @@ ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 MODELS_DIR = ROOT / "models"
 
+# Load a project-root .env (git-ignored) if python-dotenv is installed, so keys
+# like GROQ_API_KEY / ANTHROPIC_API_KEY can live in foundry/.env instead of the
+# shell. Real environment variables still take precedence and override the file.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env")
+except ImportError:
+    pass
+
 app = Flask(__name__, template_folder="templates", static_folder="static")
 # Auto-reload templates so edits to *.html files are picked up without server restart.
 # (debug=False otherwise caches templates indefinitely.)
@@ -218,6 +227,8 @@ def compute_business_impact(severity_probs: dict, customer_complaint_p: float,
 # ------------------------------------------------------------------
 
 ANTHROPIC_MODEL = "claude-opus-4-7"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 MAX_ASK_MESSAGES = 20        # cap conversation length sent to the API
 MAX_ASK_CHARS = 2000         # cap per-message length
 
@@ -226,16 +237,30 @@ try:
 except ImportError:           # SDK optional — demo runs without it
     anthropic = None
 
+try:
+    import openai
+except ImportError:           # SDK optional — only needed for the Groq path
+    openai = None
 
-def _init_claude():
-    """Return an Anthropic client if the SDK is installed and a key is set, else None."""
-    if anthropic is None or not os.environ.get("ANTHROPIC_API_KEY"):
-        return None
-    try:
-        return anthropic.Anthropic()
-    except Exception as ex:   # bad key format, etc. — don't crash the app
-        print(f"==> Claude client init failed ({ex}); /ask will report 'not configured'.")
-        return None
+
+def _init_assistant():
+    """Pick a chat backend from whatever key is present.
+
+    Preference order: Anthropic (Claude) if ANTHROPIC_API_KEY is set, else Groq
+    (OpenAI-compatible API) if GROQ_API_KEY is set. Returns (provider, client),
+    or (None, None) so the rest of the demo runs unaffected when neither is set.
+    """
+    if anthropic is not None and os.environ.get("ANTHROPIC_API_KEY"):
+        try:
+            return "anthropic", anthropic.Anthropic()
+        except Exception as ex:   # bad key format, etc. — don't crash the app
+            print(f"==> Claude client init failed ({ex}).")
+    if openai is not None and os.environ.get("GROQ_API_KEY"):
+        try:
+            return "groq", openai.OpenAI(api_key=os.environ["GROQ_API_KEY"], base_url=GROQ_BASE_URL)
+        except Exception as ex:
+            print(f"==> Groq client init failed ({ex}).")
+    return None, None
 
 
 def _lakh(x: float) -> str:
@@ -389,8 +414,12 @@ ASK_SYSTEM_PREAMBLE = (
 
 ASK_DATA_SUMMARY = build_ask_context()
 ASK_SYSTEM_PROMPT = ASK_SYSTEM_PREAMBLE + "\n\n" + ASK_DATA_SUMMARY
-claude_client = _init_claude()
-print(f"==> Conversational /ask: {'ENABLED' if claude_client else 'disabled (set ANTHROPIC_API_KEY to enable)'}.")
+ASK_PROVIDER, ask_client = _init_assistant()
+_provider_label = {
+    "anthropic": f"Claude ({ANTHROPIC_MODEL})",
+    "groq": f"Groq ({GROQ_MODEL})",
+}.get(ASK_PROVIDER, "disabled (set ANTHROPIC_API_KEY or GROQ_API_KEY to enable)")
+print(f"==> Conversational /ask: {_provider_label}.")
 
 
 # ------------------------------------------------------------------
@@ -420,7 +449,7 @@ def capabilities():
 @app.route("/ask")
 def ask_page():
     """Conversational assistant page (AI That Converses)."""
-    return render_template("ask.html", assistant_enabled=bool(claude_client))
+    return render_template("ask.html", assistant_enabled=bool(ask_client))
 
 
 @app.route("/assumptions")
@@ -536,12 +565,12 @@ def api_ask():
     Accepts either {"messages": [{role, content}, ...]} for multi-turn chat, or a
     single {"question": "..."}. Returns {"answer", "latency_ms", "usage"}.
     """
-    if claude_client is None:
+    if ask_client is None:
         return jsonify({
             "error": "not_configured",
             "answer": ("The conversational assistant isn't configured on this server yet. "
-                       "Install the SDK (`pip install anthropic`) and set the ANTHROPIC_API_KEY "
-                       "environment variable to enable it — the rest of the demo works without it."),
+                       "Set ANTHROPIC_API_KEY (Claude) or GROQ_API_KEY (Groq) in the environment "
+                       "to enable it — the rest of the demo works without it."),
         }), 503
 
     payload = request.get_json(force=True, silent=True) or {}
@@ -564,35 +593,48 @@ def api_ask():
 
     try:
         t0 = time.perf_counter()
-        resp = claude_client.messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=1500,
-            output_config={"effort": "medium"},
-            # Stable summary in the cached system block; only the conversation varies.
-            system=[{
-                "type": "text",
-                "text": ASK_SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }],
-            messages=messages,
-        )
-        answer = "".join(b.text for b in resp.content if b.type == "text").strip()
-        u = resp.usage
-        return jsonify({
-            "answer": answer or "(The assistant returned an empty response — try rephrasing.)",
-            "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
-            "usage": {
+        if ASK_PROVIDER == "anthropic":
+            resp = ask_client.messages.create(
+                model=ANTHROPIC_MODEL,
+                max_tokens=1500,
+                output_config={"effort": "medium"},
+                # Stable summary in the cached system block; only the conversation varies.
+                system=[{
+                    "type": "text",
+                    "text": ASK_SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }],
+                messages=messages,
+            )
+            answer = "".join(b.text for b in resp.content if b.type == "text").strip()
+            u = resp.usage
+            usage = {
                 "input_tokens": getattr(u, "input_tokens", None),
                 "output_tokens": getattr(u, "output_tokens", None),
                 "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", None),
                 "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", None),
-            },
+            }
+        else:  # groq — OpenAI-compatible chat completions
+            resp = ask_client.chat.completions.create(
+                model=GROQ_MODEL,
+                max_tokens=1024,
+                temperature=0.3,
+                messages=[{"role": "system", "content": ASK_SYSTEM_PROMPT}] + messages,
+            )
+            answer = (resp.choices[0].message.content or "").strip()
+            u = resp.usage
+            usage = {
+                "input_tokens": getattr(u, "prompt_tokens", None),
+                "output_tokens": getattr(u, "completion_tokens", None),
+            }
+        return jsonify({
+            "answer": answer or "(The assistant returned an empty response — try rephrasing.)",
+            "provider": ASK_PROVIDER,
+            "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "usage": usage,
         })
-    except anthropic.APIError as ex:
-        msg = getattr(ex, "message", str(ex))
-        return jsonify({"error": "api_error", "answer": f"The assistant hit an API error: {msg}"}), 502
     except Exception as ex:
-        return jsonify({"error": "server_error", "answer": f"Unexpected error: {ex}"}), 500
+        return jsonify({"error": "api_error", "answer": f"The assistant hit an error: {ex}"}), 502
 
 
 # ------------------------------------------------------------------

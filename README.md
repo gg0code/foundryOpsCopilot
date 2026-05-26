@@ -102,21 +102,30 @@ python app.py
 
 ### Enabling the "Ask AI" page (`/ask`)
 
-The conversational assistant calls the Claude API. It is **optional** — every other
-page works without it. To turn it on, set an API key before starting the server:
+The conversational assistant is **optional** — every other page works without it.
+It uses whichever key is present: **Claude** if `ANTHROPIC_API_KEY` is set, otherwise
+**Groq** (OpenAI-compatible, fast and low-cost) if `GROQ_API_KEY` is set.
 
 ```bash
-# macOS / Linux
-export ANTHROPIC_API_KEY=sk-ant-...
-# Windows PowerShell
-$env:ANTHROPIC_API_KEY = "sk-ant-..."
+# Option A — Claude
+export ANTHROPIC_API_KEY=sk-ant-...        # PowerShell: $env:ANTHROPIC_API_KEY = "sk-ant-..."
+
+# Option B — Groq (reuse a gsk_... key)
+export GROQ_API_KEY=gsk_...                # PowerShell: $env:GROQ_API_KEY = "gsk_..."
+# optional model override (default: llama-3.3-70b-versatile)
+export GROQ_MODEL=openai/gpt-oss-120b
 
 python app.py
 ```
 
-If the key is unset, `/ask` loads and shows a "not configured" notice; the rest of
-the demo is unaffected. Answers are grounded in a summary of `data/heats_2025.csv`
-(model: `claude-opus-4-7`); the summary sits in a cached system prompt.
+**Prefer a file?** Copy `.env.example` to `.env` in the project root and put the key
+there (`GROQ_API_KEY=gsk_...`). `.env` is git-ignored, and `app.py` loads it on
+startup via `python-dotenv`. Keep the key in `.env` or your shell — **never commit it**.
+
+The startup log prints which backend is active. If neither key is set, `/ask` loads
+and shows a "not configured" notice; the rest of the demo is unaffected. Answers are
+grounded in a summary of `data/heats_2025.csv` (Claude path additionally caches that
+summary in the system prompt).
 
 ---
 

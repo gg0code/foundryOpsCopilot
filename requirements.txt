@@ -11,6 +11,9 @@ lightgbm>=4.1
 shap>=0.44
 joblib>=1.3
 # Powers the /ask conversational endpoint (AI That Converses).
-# Optional at runtime: if anthropic isn't installed or ANTHROPIC_API_KEY is unset,
-# the rest of the demo runs normally and /ask returns a friendly "not configured" message.
-anthropic>=0.40
+# Optional at runtime — the rest of the demo runs without either. /api/ask uses
+# Claude if ANTHROPIC_API_KEY is set, else Groq (OpenAI-compatible) if GROQ_API_KEY
+# is set; otherwise it returns a friendly "not configured" message.
+anthropic>=0.40   # Claude path
+openai>=1.30      # Groq path (points the OpenAI SDK at https://api.groq.com/openai/v1)
+python-dotenv>=1.0  # loads keys from a git-ignored .env in the project root
