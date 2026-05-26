@@ -1,4 +1,4 @@
-\# Build: Foundry AI Demo — Casting Quality \& Yield Optimizer (Kirloskar POC)
+\# Build: Foundry AI Demo — Casting Quality \& Yield Optimizer (IndieFoundry POC)
 
 
 
@@ -6,7 +6,7 @@
 
 
 
-I'm building a customer-facing demo for \*\*Kirloskar\*\*, a manufacturer of \*\*automotive and engine-related castings\*\*. We don't have customer data yet, so we'll generate \*\*metallurgically rigorous synthetic data\*\*, train real ML models on it, and serve predictions through a polished web UI.
+I'm building a customer-facing demo for \*\*IndieFoundry\*\*, a manufacturer of \*\*automotive and engine-related castings\*\*. We don't have customer data yet, so we'll generate \*\*metallurgically rigorous synthetic data\*\*, train real ML models on it, and serve predictions through a polished web UI.
 
 
 
@@ -322,7 +322,7 @@ ALL METALLURGICAL RULES VERIFIED
 
 
 
-This printout is something you can SHOW the Kirloskar metallurgist during the demo. It's the moment they trust the data.
+This printout is something you can SHOW the IndieFoundry metallurgist during the demo. It's the moment they trust the data.
 
 
 
@@ -570,7 +570,7 @@ Display the output of `generate\_data.py --verify` as a styled report block on t
 
 \*\*J. Footer\*\*
 
-Zero Zeta branding, "Built for Kirloskar — Proof of Concept"
+Zero Zeta branding, "Built for IndieFoundry — Proof of Concept"
 
 
 

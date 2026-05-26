@@ -2,7 +2,7 @@
 Here's a comprehensive breakdown of FoundryOps Copilot by Zero Zeta — everything you need for marketing:
 
 🏭 Product: FoundryOps Copilot
-By Zero Zeta · Manufacturing AI | Proof of Concept for Kirloskar
+By Zero Zeta · Manufacturing AI | Proof of Concept for IndieFoundry
 
 🔴 Problem Statement
 "Eight pains that quietly cost crores every year, recognised by every Indian foundry plant head."

@@ -5,7 +5,7 @@
 | --- | --- |
 | Product | FoundryOps Copilot |
 | Built by | Zero Zeta |
-| Target customer | Kirloskar (automotive & engine castings) |
+| Target customer | IndieFoundry (automotive & engine castings) |
 | Version | 0.4.0 |
 | Document status | Draft — generated from working POC codebase |
 | Document date | 2026-05-17 |
@@ -18,7 +18,7 @@
 
 This document specifies the requirements for **FoundryOps Copilot**, a customer-facing proof-of-concept web application demonstrating AI-driven casting defect prediction, root-cause analysis, and quantified business impact for a single automotive engine-block part.
 
-The system is delivered as a **live laptop demo** to be shown to plant heads, quality engineers, metallurgists, and CTOs at Kirloskar with the goal of converting the demo into an 8-week paid POC engagement.
+The system is delivered as a **live laptop demo** to be shown to plant heads, quality engineers, metallurgists, and CTOs at IndieFoundry with the goal of converting the demo into an 8-week paid POC engagement.
 
 ### 1.2 Scope
 
@@ -388,7 +388,7 @@ None. Pure software; no PLC, sensor, or CNC integration is part of this release.
 
 ### UC-1 — Metallurgist audits data rules
 
-**Actor:** Foundry metallurgist (Kirloskar)
+**Actor:** Foundry metallurgist (IndieFoundry)
 **Trigger:** Reaches the landing page during the demo session.
 **Flow:**
 1. Reads the **Typical Foundry Challenges** grid and recognises the pains.

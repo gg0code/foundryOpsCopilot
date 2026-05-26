@@ -1,6 +1,6 @@
-# Foundry AI Demo — Kirloskar POC
+# Foundry AI Demo — IndieFoundry POC
 
-**Built by Zero Zeta · For Kirloskar (automotive & engine castings) · 2025 POC**
+**Built by Zero Zeta · For IndieFoundry (automotive & engine castings) · 2025 POC**
 
 A three-page Flask web application demonstrating AI-driven casting defect
 prediction, root-cause analysis, and quantified business impact for a single
@@ -206,7 +206,7 @@ Click **AI Optimal**. The gauge sweeps to green.
 ## Honest note: synthetic data
 
 This demo runs on metallurgically rigorous synthetic data — not on
-Kirloskar production data. The data generator (`generate_data.py`) is
+IndieFoundry production data. The data generator (`generate_data.py`) is
 auditable, every rule cited to a foundry reference. **Replace it with
 your data and the same code path applies** — re-run `train_model.py`
 and the demo trains in 60 seconds on your numbers.
@@ -244,8 +244,8 @@ month-over-month.
 
 The demo succeeds if, after seeing it:
 
-1. A Kirloskar metallurgist asks **"can we audit your data generation rules?"** (curiosity, not suspicion)
-2. A Kirloskar plant head asks **"how long to run this on our data?"** (intent, not skepticism)
+1. A IndieFoundry metallurgist asks **"can we audit your data generation rules?"** (curiosity, not suspicion)
+2. A IndieFoundry plant head asks **"how long to run this on our data?"** (intent, not skepticism)
 3. The 6.8% → 3.5% scrap story is **repeated back** by someone in the room (narrative stickiness)
 4. We are **invited to scope an 8-week paid POC** (commercial outcome)
 

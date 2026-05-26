@@ -6,13 +6,13 @@
 
 
 
-A \*\*customer demo\*\* for Kirloskar (automotive/engine castings manufacturer in India). Three-page Flask web application demonstrating AI-driven casting defect prediction, root cause analysis, and business impact quantification. Built on metallurgically rigorous synthetic data because we don't have customer data yet.
+A \*\*customer demo\*\* for IndieFoundry (automotive/engine castings manufacturer in India). Three-page Flask web application demonstrating AI-driven casting defect prediction, root cause analysis, and business impact quantification. Built on metallurgically rigorous synthetic data because we don't have customer data yet.
 
 
 
 \*\*Built by:\*\* Zero Zeta
 
-\*\*Audience:\*\* Kirloskar plant heads, quality engineers, metallurgists, CTOs
+\*\*Audience:\*\* IndieFoundry plant heads, quality engineers, metallurgists, CTOs
 
 \*\*Delivery mode:\*\* Live laptop demo (single command launch)
 
@@ -502,9 +502,9 @@ python generate\_data.py --verify
 
 \*\*The demo succeeds if, after seeing it:\*\*
 
-1\. A Kirloskar metallurgist asks "can we audit your data generation rules?" (curiosity, not suspicion)
+1\. A IndieFoundry metallurgist asks "can we audit your data generation rules?" (curiosity, not suspicion)
 
-2\. A Kirloskar plant head asks "how long to run this on our data?" (intent, not skepticism)
+2\. A IndieFoundry plant head asks "how long to run this on our data?" (intent, not skepticism)
 
 3\. The 6.8% → 3.5% scrap story is repeated back by someone in the room (narrative stickiness)
 
