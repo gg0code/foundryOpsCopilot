@@ -369,6 +369,25 @@ def build_ask_context() -> str:
     for f, cval in corrs[:10]:
         lines.append(f"  - {f}: {cval:+.2f}")
 
+    # Per-numeric-feature distribution stats. With mean + std + min/max + p5/p95
+    # in context the assistant can answer std-dev questions directly and compute
+    # z-scores arithmetically (z = (x - mean) / std) without a tool call.
+    lines.append("Per-feature distribution (mean / std / min / max / p5 / p95):")
+    for fname in NUMERIC_FEATURES:
+        if fname not in DF.columns:
+            continue
+        s = DF[fname]
+        try:
+            mu, sd = float(s.mean()), float(s.std())
+            lo, hi = float(s.min()), float(s.max())
+            p5, p95 = float(s.quantile(0.05)), float(s.quantile(0.95))
+            lines.append(
+                f"  - {fname}: mean={mu:.4g}, std={sd:.4g}, min={lo:.4g}, "
+                f"max={hi:.4g}, p5={p5:.4g}, p95={p95:.4g}"
+            )
+        except Exception:
+            continue
+
     lines.append(
         "Key cost assumptions: scrap ₹{:,}/casting, rework ₹{:,}/casting, complaint ₹{:,}/incident, "
         "warranty ₹{:,}/claim ({:.0%} of complaints escalate), delay ₹{:,}/min.".format(
