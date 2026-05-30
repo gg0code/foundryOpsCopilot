@@ -408,6 +408,22 @@ def build_ask_context() -> str:
         "SHAP root-cause attribution, continuous anomaly detection (AI That Watches), Bayesian setpoint optimizer "
         "(AI That Acts), and per-prediction confidence bands with human-in-the-loop review (AI That Knows Its Limits)."
     )
+
+    # Curated industry reference points — for "how do we compare to world-class?" questions.
+    # Sources: AFS Cast Iron Handbook; IIF best-practice publications; automotive PPAP norms.
+    # NOT direct competitor data — general industry references, vary by plant size / country / tech.
+    lines.append("INDUSTRY REFERENCE BENCHMARKS (grey-iron automotive engine castings; sources: AFS Cast Iron Handbook, IIF best-practice papers, automotive PPAP norms):")
+    lines.append("  - Scrap rate: world-class 2-3%, plant average 5-8%, struggling >10%")
+    lines.append("  - Rework rate: world-class 1-2%, plant average 3-5%")
+    lines.append("  - First-pass yield (sound castings out of total poured): world-class >=92%, average 85-90%")
+    lines.append("  - Dimensional Cpk on PPAP-critical features: OEM minimum 1.33, world-class >=1.67")
+    lines.append("  - Customer complaint rate: world-class <100 PPM shipped; automotive supplier average 300-500 PPM")
+    lines.append("  - Warranty escape: world-class <0.1% of shipments; concern >0.5%")
+    lines.append("  - Energy intensity (induction melting): world-class 550-650 kWh/t; many Indian plants 750-900 kWh/t")
+    lines.append("  - Pattern replacement: world-class predictive at ~1000 cycles BEFORE dim-NC rate inflects (not after)")
+    lines.append("  - Inoculation fade window: optimum pour within 3-5 min of inoculant addition; >8 min loses graphite control")
+    lines.append("  - Operator-to-operator defect variance (within plant): world-class <1.5x ratio between best and worst shift")
+    lines.append("These are reference points to anchor 'how do we compare' questions, NOT absolute targets — they vary by plant size, country, technology. Use them to frame our numbers honestly, never as competitor data.")
     return "\n".join(lines)
 
 
@@ -428,6 +444,27 @@ ASK_SYSTEM_PREAMBLE = (
     "- For 'how confident / when to trust the AI' questions, answer in terms of confidence bands and human-in-the-loop "
     "review (AI That Knows Its Limits): wide bands on rare or extreme conditions get flagged for a metallurgist.\n"
     "- Never promise committed percentage outcomes; describe capabilities and the data, not guarantees.\n"
+    "- For statistics NOT covered by the summary (std/percentiles on a filtered slice, group-by stats, "
+    "Pearson correlations between specific numeric columns), CALL the `aggregate` or `correlation` tool — "
+    "do not invent or estimate. Prefer the summary when it already has the answer; the tools are for "
+    "conditional or pairwise queries the summary cannot cover.\n"
+    "- INTERPRET signal, do not parrot numbers. Correlation strength: |r|<0.10 is essentially no relationship "
+    "(do NOT report as a finding — say 'no meaningful relationship' and move on); 0.10-0.20 weak; "
+    "0.20-0.40 moderate; >0.40 strong. For group-by results: if the values vary by less than ~5% across "
+    "groups, say 'no meaningful variation across X' instead of listing the table. Always lead with the "
+    "conclusion ('Shift B is ~25% more variable, std 22 vs A/C at ~17'), then the supporting numbers.\n"
+    "- REFUSE metallurgically nonsensical groupings. Environmental variables (ambient_humidity_pct, "
+    "ambient_temp_C) are driven by weather and season, not equipment — never group them by pattern_id, "
+    "furnace_id, or mold_line_id. Capability (Cpk) is process-driven, not seasonal. Example: if asked "
+    "'mean humidity by month for pattern PT-A', respond: 'Ambient humidity is a plant-environment "
+    "variable, identical across patterns — the right cut is humidity by month (or season). Want that "
+    "instead?' Do NOT compute the meaningless version; the tool will reject it anyway.\n"
+    "- Use the MINIMUM number of tool calls needed. Do NOT fan out into unrelated stats just because the "
+    "tools are available. If a question is too vague (e.g. 'show me some stats'), ask ONE clarifying "
+    "question instead of dumping data.\n"
+    "- For benchmarking / 'how do we compare to world-class foundries' questions, use the INDUSTRY "
+    "BENCHMARKS block in the dataset summary below. Never invent numbers for other companies or sources "
+    "outside that block. Be honest that those are general industry references, not direct competitor data.\n"
     "- Plain text or simple markdown (bold, hyphen bullets) only. No tables, no code blocks."
 )
 
@@ -439,6 +476,279 @@ _provider_label = {
     "groq": f"Groq ({GROQ_MODEL})",
 }.get(ASK_PROVIDER, "disabled (set ANTHROPIC_API_KEY or GROQ_API_KEY to enable)")
 print(f"==> Conversational /ask: {_provider_label}.")
+
+
+# ------------------------------------------------------------------
+# /api/ask tools — let the assistant compute conditional / multivariate
+# statistics on demand (std, percentile, correlation, group-by) so it can
+# answer questions beyond what the cached summary covers. Defined once and
+# adapted per provider; pandas runs locally, never echoed back as code.
+# ------------------------------------------------------------------
+
+MAX_TOOL_ITERATIONS = 4     # cap the agentic loop per request
+
+_NUMERIC_TOOL_COLS = sorted(set(NUMERIC_FEATURES) & set(DF.columns))
+_CATEGORICAL_TOOL_COLS = [
+    c for c in ("shift", "furnace_id", "mold_line_id", "pattern_id", "season",
+                "defect_class", "severity", "disposition", "month")
+    if c in DF.columns
+]
+
+
+def _apply_filters(df: pd.DataFrame, filters: dict | None) -> pd.DataFrame:
+    """Apply scalar / IN / range filters to a DataFrame. Unknown keys are skipped."""
+    if not filters:
+        return df
+    out = df
+    for k, v in filters.items():
+        if k not in out.columns:
+            continue
+        if isinstance(v, (list, tuple)):
+            out = out[out[k].isin(list(v))]
+        elif isinstance(v, dict):
+            for op, val in v.items():
+                if op in (">=", "min"): out = out[out[k] >= val]
+                elif op in ("<=", "max"): out = out[out[k] <= val]
+                elif op == ">":          out = out[out[k] > val]
+                elif op == "<":          out = out[out[k] < val]
+        else:
+            out = out[out[k] == v]
+    return out
+
+
+def _compute_stat(series: pd.Series, statistic: str):
+    s = pd.to_numeric(series, errors="coerce").dropna()
+    if len(s) == 0:
+        raise ValueError("no numeric values for this column/filter")
+    if statistic == "mean":   return float(s.mean())
+    if statistic == "std":    return float(s.std())
+    if statistic == "var":    return float(s.var())
+    if statistic == "min":    return float(s.min())
+    if statistic == "max":    return float(s.max())
+    if statistic == "median": return float(s.median())
+    if statistic == "sum":    return float(s.sum())
+    if statistic == "count":  return int(s.count())
+    if statistic.startswith("p") and statistic[1:].isdigit():
+        return float(s.quantile(int(statistic[1:]) / 100.0))
+    raise ValueError(f"unsupported statistic '{statistic}'")
+
+
+_ENV_COLS = {"ambient_humidity_pct", "ambient_temp_C"}
+_EQUIPMENT_COLS = {"pattern_id", "furnace_id", "mold_line_id"}
+
+
+def _detect_category_mismatch(column: str | None, filters: dict, group_by: str | None) -> str | None:
+    """Refuse combinations where the grouping has no plausible causal mechanism.
+
+    Environmental variables (humidity, temp) are driven by weather and season, not by
+    which pattern or furnace you used — grouping or filtering them by equipment IDs
+    produces noise that looks like signal. Reject at the tool layer so the model can't
+    talk itself into reporting it.
+    """
+    keys = set((filters or {}).keys())
+    if group_by:
+        keys.add(group_by)
+    if column in _ENV_COLS and keys & _EQUIPMENT_COLS:
+        bad = sorted(keys & _EQUIPMENT_COLS)
+        return (f"category_error: '{column}' is an environmental variable (driven by weather/season), "
+                f"not by {bad}. Cut by 'season' or 'month' instead. Do not retry this combination.")
+    return None
+
+
+def _tool_aggregate(args: dict) -> dict:
+    column, statistic = args.get("column"), args.get("statistic")
+    filters, group_by = args.get("filters") or {}, args.get("group_by")
+    if column not in DF.columns:
+        return {"error": f"unknown column '{column}'", "allowed_numeric_columns": _NUMERIC_TOOL_COLS}
+    mismatch = _detect_category_mismatch(column, filters, group_by)
+    if mismatch:
+        return {"error": mismatch}
+    df = _apply_filters(DF, filters)
+    n = int(len(df))
+    if n == 0:
+        return {"error": "no rows match the filters", "filters": filters, "n": 0}
+    if group_by:
+        if group_by not in df.columns:
+            return {"error": f"unknown group_by '{group_by}'", "allowed_group_by": _CATEGORICAL_TOOL_COLS}
+        out: dict = {}
+        for k, sub in df.groupby(group_by):
+            if len(out) >= 50:
+                break
+            try:
+                out[str(k)] = round(_compute_stat(sub[column], statistic), 4)
+            except Exception:
+                continue
+        return {"column": column, "statistic": statistic, "filters": filters,
+                "group_by": group_by, "n": n, "by_group": out}
+    try:
+        val = _compute_stat(df[column], statistic)
+    except ValueError as ex:
+        return {"error": str(ex)}
+    return {"column": column, "statistic": statistic, "filters": filters,
+            "n": n, "result": round(val, 4) if isinstance(val, float) else val}
+
+
+def _tool_correlation(args: dict) -> dict:
+    a, b = args.get("column_a"), args.get("column_b")
+    filters = args.get("filters") or {}
+    if a not in DF.columns or b not in DF.columns:
+        return {"error": "unknown column(s)", "allowed_numeric_columns": _NUMERIC_TOOL_COLS}
+    for col in (a, b):
+        mismatch = _detect_category_mismatch(col, filters, None)
+        if mismatch:
+            return {"error": mismatch}
+    df = _apply_filters(DF, filters)
+    n = int(len(df))
+    if n < 2:
+        return {"error": "need at least 2 rows", "n": n}
+    try:
+        sa = pd.to_numeric(df[a], errors="coerce")
+        sb = pd.to_numeric(df[b], errors="coerce")
+        r = float(sa.corr(sb))
+        if not np.isfinite(r):
+            return {"error": "correlation undefined (zero variance?)", "n": n}
+    except Exception as ex:
+        return {"error": str(ex)}
+    return {"column_a": a, "column_b": b, "filters": filters, "n": n, "pearson_r": round(r, 4)}
+
+
+def _execute_tool(name: str, args: dict) -> dict:
+    if name == "aggregate":   return _tool_aggregate(args)
+    if name == "correlation": return _tool_correlation(args)
+    return {"error": f"unknown tool '{name}'"}
+
+
+# Single source of truth for the tool catalogue; provider adapters reshape below.
+_DATASET_TOOLS = [
+    {
+        "name": "aggregate",
+        "description": (
+            "Compute a numeric statistic on a column of the foundry heats dataset. "
+            "Use for std-dev, mean, percentile, count, etc. on a conditional slice or "
+            "grouped by a categorical column. Prefer this over guessing whenever the "
+            "summary does not already have the exact figure."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "column":    {"type": "string", "description": f"Numeric column. Allowed: {_NUMERIC_TOOL_COLS}"},
+                "statistic": {"type": "string", "enum": ["mean", "std", "var", "min", "max", "median", "sum", "count", "p5", "p10", "p25", "p50", "p75", "p90", "p95"]},
+                "filters":   {"type": "object", "description": (f"Optional filter map. Keys: {_CATEGORICAL_TOOL_COLS}. "
+                              "Values may be a scalar (equality), a list (IN), or a range like {'>=': x, '<=': y}."),
+                              "additionalProperties": True},
+                "group_by":  {"type": "string", "description": f"Optional categorical to group results by. Allowed: {_CATEGORICAL_TOOL_COLS}"},
+            },
+            "required": ["column", "statistic"],
+        },
+    },
+    {
+        "name": "correlation",
+        "description": "Pearson correlation between two numeric columns, optionally filtered to a slice. Returns r and n.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "column_a": {"type": "string", "description": f"First numeric column. Allowed: {_NUMERIC_TOOL_COLS}"},
+                "column_b": {"type": "string", "description": f"Second numeric column. Allowed: {_NUMERIC_TOOL_COLS}"},
+                "filters":  {"type": "object", "additionalProperties": True},
+            },
+            "required": ["column_a", "column_b"],
+        },
+    },
+]
+
+
+def _anthropic_tools_payload():
+    return [{"name": t["name"], "description": t["description"], "input_schema": t["input_schema"]}
+            for t in _DATASET_TOOLS]
+
+
+def _openai_tools_payload():
+    return [{"type": "function", "function": {
+                "name": t["name"], "description": t["description"], "parameters": t["input_schema"]}}
+            for t in _DATASET_TOOLS]
+
+
+def _ask_via_anthropic(messages_in: list[dict]) -> tuple[str, dict, int]:
+    """Agentic loop against Claude. Returns (answer, usage, tool_calls_count)."""
+    messages = list(messages_in)
+    last_usage: dict = {}
+    n_tools = 0
+    for _ in range(MAX_TOOL_ITERATIONS):
+        resp = ask_client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=1500,
+            output_config={"effort": "medium"},
+            system=[{"type": "text", "text": ASK_SYSTEM_PROMPT,
+                     "cache_control": {"type": "ephemeral"}}],
+            tools=_anthropic_tools_payload(),
+            messages=messages,
+        )
+        u = resp.usage
+        last_usage = {
+            "input_tokens": getattr(u, "input_tokens", None),
+            "output_tokens": getattr(u, "output_tokens", None),
+            "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", None),
+            "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", None),
+        }
+        if resp.stop_reason != "tool_use":
+            answer = "".join(b.text for b in resp.content if b.type == "text").strip()
+            return answer, last_usage, n_tools
+        # Echo assistant message verbatim, then return all tool results in one user turn.
+        messages.append({"role": "assistant", "content": resp.content})
+        results = []
+        for blk in resp.content:
+            if blk.type == "tool_use":
+                n_tools += 1
+                result = _execute_tool(blk.name, blk.input or {})
+                results.append({"type": "tool_result", "tool_use_id": blk.id,
+                                "content": json.dumps(result)})
+        messages.append({"role": "user", "content": results})
+    return ("I tried to compute that but the tool loop didn't converge. "
+            "Try a simpler or more specific question.", last_usage, n_tools)
+
+
+def _ask_via_openai(messages_in: list[dict]) -> tuple[str, dict, int]:
+    """Agentic loop against an OpenAI-compatible endpoint (Groq)."""
+    messages = [{"role": "system", "content": ASK_SYSTEM_PROMPT}] + list(messages_in)
+    last_usage: dict = {}
+    n_tools = 0
+    for _ in range(MAX_TOOL_ITERATIONS):
+        resp = ask_client.chat.completions.create(
+            model=GROQ_MODEL,
+            max_tokens=1024,
+            temperature=0.3,
+            tools=_openai_tools_payload(),
+            messages=messages,
+        )
+        u = resp.usage
+        last_usage = {
+            "input_tokens": getattr(u, "prompt_tokens", None),
+            "output_tokens": getattr(u, "completion_tokens", None),
+        }
+        msg = resp.choices[0].message
+        tcs = getattr(msg, "tool_calls", None) or []
+        if not tcs:
+            return (msg.content or "").strip(), last_usage, n_tools
+        # Echo the assistant turn including the tool_calls before posting results.
+        messages.append({
+            "role": "assistant",
+            "content": msg.content or "",
+            "tool_calls": [{
+                "id": tc.id, "type": "function",
+                "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+            } for tc in tcs],
+        })
+        for tc in tcs:
+            n_tools += 1
+            try:
+                args = json.loads(tc.function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = {}
+            result = _execute_tool(tc.function.name, args)
+            messages.append({"role": "tool", "tool_call_id": tc.id,
+                             "content": json.dumps(result)})
+    return ("I tried to compute that but the tool loop didn't converge. "
+            "Try a simpler or more specific question.", last_usage, n_tools)
 
 
 # ------------------------------------------------------------------
@@ -613,46 +923,25 @@ def api_ask():
     try:
         t0 = time.perf_counter()
         if ASK_PROVIDER == "anthropic":
-            resp = ask_client.messages.create(
-                model=ANTHROPIC_MODEL,
-                max_tokens=1500,
-                output_config={"effort": "medium"},
-                # Stable summary in the cached system block; only the conversation varies.
-                system=[{
-                    "type": "text",
-                    "text": ASK_SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }],
-                messages=messages,
-            )
-            answer = "".join(b.text for b in resp.content if b.type == "text").strip()
-            u = resp.usage
-            usage = {
-                "input_tokens": getattr(u, "input_tokens", None),
-                "output_tokens": getattr(u, "output_tokens", None),
-                "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", None),
-                "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", None),
-            }
-        else:  # groq — OpenAI-compatible chat completions
-            resp = ask_client.chat.completions.create(
-                model=GROQ_MODEL,
-                max_tokens=1024,
-                temperature=0.3,
-                messages=[{"role": "system", "content": ASK_SYSTEM_PROMPT}] + messages,
-            )
-            answer = (resp.choices[0].message.content or "").strip()
-            u = resp.usage
-            usage = {
-                "input_tokens": getattr(u, "prompt_tokens", None),
-                "output_tokens": getattr(u, "completion_tokens", None),
-            }
+            answer, usage, n_tools = _ask_via_anthropic(messages)
+        else:
+            answer, usage, n_tools = _ask_via_openai(messages)
         return jsonify({
             "answer": answer or "(The assistant returned an empty response — try rephrasing.)",
             "provider": ASK_PROVIDER,
+            "tool_calls": n_tools,
             "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
             "usage": usage,
         })
     except Exception as ex:
+        msg = str(ex)
+        if "rate_limit" in msg.lower() or " 429" in msg or "rate limit" in msg.lower():
+            return jsonify({
+                "error": "rate_limit",
+                "answer": ("The LLM provider rate-limited this request. On Groq's free tier the budget "
+                           "is ~12K tokens/min and 100K tokens/day; tool-call chains burn it fast. "
+                           "Try again in a few minutes, or upgrade the plan."),
+            }), 429
         return jsonify({"error": "api_error", "answer": f"The assistant hit an error: {ex}"}), 502
 
 
